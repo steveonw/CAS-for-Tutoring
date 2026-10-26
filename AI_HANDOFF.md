@@ -154,3 +154,7 @@ GitHub artifacts may expire. If a link no longer works, rebuild the project or r
 ---
 
 *End of handoff, dated October 26, 2026. Always recheck the live repository before treating this as current.*
+
+## Post-snapshot correction (October 26, 2026)
+
+The original contents above describe the earlier v0.3.0 snapshot. The [correctness update in PR #7](https://github.com/steveonw/CAS-for-Tutoring/pull/7) advances the JavaScript calculator to **v0.3.1**. It resolves the 26-problem corpus's known `log(x)` natural/base-10 mismatch, exponential-E rendering, missing differentiation rule IDs, and constant-multiple labels; adds before/after steps and a numerical-counterexample guard; and removes all 7 TODO test exemptions. The required CI now has **76 passing mathematical tests** and a blocking MathJax rendering audit. Read `docs/DERIVATIVE_CORPUS_REVIEW.md` and check the latest live GitHub Actions status before continuing. Step 0, true student-typed next steps, fully domain-aware proof and guided limits/integrals remain unfinished.

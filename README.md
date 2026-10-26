@@ -16,7 +16,7 @@ An **offline-first Calculus I tutor** that separates correct symbolic calculatio
 
 Input ordinary expressions such as `(x^2+3)^4` or a supported TeX formula such as `\\frac{x^3}{3}`. Nerdamer converts the expression, computes symbolically, and outputs LaTeX. A locally bundled MathJax turns that into readable textbook-style fractions, roots, integrals, derivatives, and limits. You can reveal and copy the raw answer LaTeX in the interface.
 
-**Now included:** The CAS edition shows actual intermediate derivative transformations for supported problems. Reveal steps one at a time, ask why, predict the next rule, request hints, or show all. The answer stays hidden until requested. Integration, limits, and other operations do **not yet** have the same verified step-by-step interface.
+**Now included:** The CAS edition shows actual intermediate derivative transformations for supported problems. The v0.3.1 correctness pass fixes the natural-log mismatch, chain and constant-multiple labels, and MathJax exponential notation; cross-engine conflicts now block misleading walkthroughs. Reveal steps one at a time, ask why, predict the next rule, request hints, or show all. The answer stays hidden until requested. Integration, limits, and other operations do **not yet** have the same verified step-by-step interface.
 
 ## How to build offline from source
 

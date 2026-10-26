@@ -1,58 +1,71 @@
-# Derivative corpus and collaborator review — October 26, 2026
+# 26-problem derivative regression and corrections
 
-Source: user-supplied `derivative-corpus-tests.patch` from a collaborator.
-The tests are integrated as a reviewed adaptation, not an endorsement that
-all derivative traces or explanations are correct.
+Original source: the user's supplied `derivative-corpus-tests.patch`.
+As of **v0.3.1**, the test suite is REQUIRED (no TODO exceptions) and the
+MathJax browser rendering audit is REQUIRED (no continue-on-error).
+All changes are tracked in [PR #7](https://github.com/steveonw/CAS-for-Tutoring/pull/7).
 
-## Run
+## What was fixed
 
-From `js-cas/` with Node.js 22+ and dependencies installed:
+1. **Logarithms.** Nerdamer uses natural `log()`, while CortexJS would read
+   serialized `\\mathrm{log}` as base 10. We normalize **Nerdamer-generated
+   TeX only** to `\\ln` before parsing for step tracing or rendering. This
+   also fixes `x^x` and `2^x` answer display. Numerical samples verify no
+   detected counterexample in the regression corpus.
+2. **Exponentials.** Add a local MathJax `\\exponentialE` macro rendering
+   Euler's number upright. The render-check browser script now **fails CI**
+   for a MathJax `merror`.
+3. **Named rules.** CortexJS IDs for chain, exponential and general-power
+   differentiation map to explicit teaching hints and rule quiz choices.
+4. **Constant multiples.** Before/after MathJSON identifies when an actual
+   numerical coefficient is moved outside differentiation. The student sees
+   the *constant multiple rule* rather than a misleading product-rule label.
+   The original CortexJS rule ID is retained for traceability.
+5. **Extra safeguards.** Eliminate adjacent duplicate TeX steps; show the
+   expression before and after each rule. A **detected numeric mismatch**
+   with Nerdamer blocks the walkthrough and final answer. Matching sample
+   values are never claimed to prove symbolic equality.
+
+## Reproduce
+
+Node 22+, then from `js-cas/`:
 
 ```bash
 npm install
 npm test
-npm run traces
 npm run build:offline
-npm run test:render
 npm run test:browser
+npm run test:render
+npm run audit:rules
 ```
 
-The first command needs internet to install dependencies. The built app is
-offline. Render and browser tests require installed Google Chrome on the CI
-runner (Ubuntu 24.04). `npm run traces -- "sin(x^2)" "x^x"` prints just
-specific traces.
+Browser tests need Google Chrome on CI or compatible installed Chromium
+(see Playwright setup). `npm run traces -- 'sin(x^2)' 'x^x'` prints the
+actual recorded transformations.
 
-The corpus has **26 expressions** that exercise powers, constant multiples,
-product, quotient, chain, trig, inverse trig, logarithms, exponentials, radicals,
-absolute value, and an unusual variable exponent. Some have restricted domains.
+The 26 expressions cover standard powers, numerical coefficients, chain,
+product, quotient, logarithmic, exponential, trig, inverse trig, root,
+absolute value and variable-power cases. Some derivatives have restricted
+real domains. The sample points in the corpus cover a **subset** of valid
+positive real inputs, not all domains.
 
-### How to interpret results
+## Verification and limitations
 
-- `npm test`: checks that traces are present and numerically compares final
-  CortexJS/Nerdamer values at four *chosen valid samples*. A failure indicates
-  a discrepancy or evaluator issue; a pass at samples **does not prove**
-  mathematical equivalence or preserve domain restrictions.
-- Several tests are deliberately marked **TODO** to document defects without
-  breaking CI. A green `npm test` does **not** mean the TODO bugs are fixed.
-- `npm run test:render`: browser-level MathJax error detection. It currently
-  may fail on emitted `\\exponentialE` because MathJax has no corresponding
-  macro. For that reason only, CI runs this audit with
-  `continue-on-error: true`; never describe it as a passing requirement.
-- `npm run test:browser`: existing offline UI regression tests; separately
-  verifies the single-file and folder distributions.
+The feature-branch CI at
+https://github.com/steveonw/CAS-for-Tutoring/actions/runs/40422867230
+recorded **76 passing tests; 0 failures; 0 TODO tests** and a successful
+blocking MathJax render audit. Both offline folder and single HTML page
+passed Chrome smoke testing.
 
-### Reported bugs to address next
+A numeric counterexample can prove expressions differ. Agreement at
+several sampled values **cannot prove** mathematical equivalence; algebraic
+identities and excluded points still require domain-aware verification.
 
-1. MathJax's missing `\\exponentialE` macro causes a red rendering error.
-2. Nerdamer interprets `log` as natural logarithm while CortexJS may read
-   `\\mathrm{log}` as base 10. Resolve semantics *before tracing*, and add
-   numeric counterexample checks. Inconclusive symbolic equality is not success.
-3. Map actual CortexJS chain, general power, exponential and other rule IDs to
-   meaningful educational names. Ensure the quiz accepts chain rule.
-4. Label numerical coefficients as **constant multiple**, not product rule.
-5. After those, add Step 0, before/after displays, no-op simplification removal,
-   typed next steps, known-mistake diagnostics, and domain explanations.
+**Remaining teaching tasks:** Show Step 0 and quiz the first rule; enable
+student-typed intermediate expressions; explain individual constant terms
+removed by sum rules; avoid pedagogically unhelpful (but valid) expansions;
+track and teach domains rigorously (e.g. `ln(x)` for `x>0`, derivative of
+`abs(x)` undefined at zero); add full integral and limit walkthroughs;
+expand the regression corpus with negative and boundary-domain tests.
 
-Some tests intentionally encode the **current** undesired behavior as TODO,
-not a target. As code improves, turn fixed TODO tests into strict tests. Treat
-the original collaborator's 26 cases as a start, not complete Calc I coverage.
+This is a tested educational prototype, not a universal proof engine.
