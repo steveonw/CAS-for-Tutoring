@@ -30,8 +30,17 @@ for (const [src, local] of scripts) {
   if (!html.includes(tag)) throw Error('Missing expected script tag: ' + src);
   html = html.replace(tag, '');
   const data = fs.readFileSync(path.join(directory, local), 'utf8');
-  inline.push('<script>\n/* Embedded offline asset: ' + local + ' */\n' +
-    safeForScript(data) + '\n</script>');
+  // The large CortexJS bundle contains HTML-parser-sensitive script text.
+  // Transport its TRUSTED BUILD-TIME bytes as base64 to prevent the browser's
+  // HTML parser from truncating the inline JavaScript. Never eval user input.
+  if (local === 'vendor/step-engine.bundle.js') {
+    const encoded = Buffer.from(data, 'utf8').toString('base64');
+    inline.push('<script>\n/* Bundled offline derivative step engine (build-time trusted) */\n' +
+      '(0,eval)(atob("' + encoded + '"));\n</script>');
+  } else {
+    inline.push('<script>\n/* Embedded offline asset: ' + local + ' */\n' +
+      safeForScript(data) + '\n</script>');
+  }
 }
 const licenses = [
   ['mathjax', 'MATHJAX-LICENSE.txt'],
