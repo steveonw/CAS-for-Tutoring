@@ -13,7 +13,7 @@ on:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: js-cas
@@ -21,8 +21,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - name: Install pinned Nerdamer and MathJax
+          node-version: '22'
+      - name: Install pinned CAS, renderer and UI-test dependencies
         run: npm install --no-audit --no-fund
       - name: Test symbolic math and TeX conversions
         run: npm test
@@ -37,19 +37,36 @@ jobs:
           test -s offline/lesson-math.js
           test -s offline/cas-adapter.js
           test -s offline/vendor/nerdamer.bundle.js
+          test -s offline/vendor/step-engine.bundle.js
+          test -s offline/vendor/CORTEXJS-LICENSE.txt
           test -s offline/vendor/mathjax-tex-svg.js
           test -s offline/vendor/NERDAMER-LICENSE.txt
           test -s offline/vendor/MATHJAX-LICENSE.txt
           grep -q 'lesson-math.js' offline/learn.html
           grep -q 'mathjax-tex-svg.js' offline/learn.html
           node --check offline/app.js
+          node --check lib/step-engine.mjs
+          grep -q 'Step-by-step breakdown' offline/app.js
+          grep -q 'step-engine.bundle.js' offline/index.html
           node --check offline/lesson-math.js
           test -s offline/calculus-lab-single-file.html
           node --check scripts/build-single-file.cjs
           ! grep -Ei '<script[^>]* src=' offline/calculus-lab-single-file.html
           grep -q 'license-mathjax' offline/calculus-lab-single-file.html
           grep -q 'license-nerdamer' offline/calculus-lab-single-file.html
+          grep -q 'license-cortexjs' offline/calculus-lab-single-file.html
+      - name: Verify preinstalled Chrome for offline UI tests
+        run: |
+          command -v google-chrome || command -v google-chrome-stable
+          (google-chrome --version || google-chrome-stable --version)
+      - name: Exercise the actual offline calculator in Chromium
+        run: npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: calculus-lab-browser-qa
+          path: js-cas/reports/
       - uses: actions/upload-artifact@v4
         with:
-          name: math-dreamweaver-offline-js-cas-latex
+          name: math-dreamweaver-calculus-lab-guided-steps
           path: js-cas/offline/

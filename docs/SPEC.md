@@ -48,3 +48,11 @@ Nerdamer handles symbolic operations and TeX conversion (\`convertFromLaTeX\`, \
 This architecture follows EquationWright v7.3's independently pinned, self-contained MathJax offline-rendering approach. See \`docs/LATEX_INTEGRATION.md\` for source evidence, accepted commands, security and third-party notices. The project-root \`index.html\` remains standalone and dependency-free.
 
 **Unfinished:** A verified derivation graph, full MathLive-style visual editor, and comprehensive limit/integration teaching. These require separate reasoning and test coverage.
+
+## Guided CortexJS derivatives (implemented in JavaScript edition)
+
+The offline JavaScript calculator now loads a locally packaged CortexJS Compute Engine 0.159.0 bundle. For supported differentiation problems, `lib/step-engine.mjs` calls the real `expression.explain('D',{variable:'x'})` API. Each recorded step contains a rule ID, description, intermediate LaTeX and selected Thompson textbook guidance. The UI has previous/next step, a rule-prediction mini-quiz, hints, why/reason text, show-all and hidden final answer. Nerdamer's derivative is retained as an independent CAS comparison where CortexJS can confirm equality.
+
+The result of the rule-prediction quiz only indicates whether the student correctly identified the **next rule**, not whether an arbitrary intermediate expression is mathematically correct. Unsupported inputs and all other operations fail back to the original CAS without invented steps. Current packaging supports both a complete offline folder and a single-file `calculus-lab-single-file.html` edition. The original root derivative tutor and Python CAS remain unchanged.
+
+Future: structured student step entry, rigorous domain-aware equality validation, limit explanations, Rubi integration traces with readable rule names, and broader textbook regression coverage. See `docs/JS_STEP_TUTOR_RESEARCH_2026-10-26.md`.
