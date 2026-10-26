@@ -1,6 +1,6 @@
 /* Expanded regression suite supplied by a collaborator and reviewed/adapted.
  * Test corpus contains 26 common derivatives. Known product bugs are marked
- * TODO: these reveal defects but do not block npm test until fixed.
+ * Known-bug checks are required to pass; no TODO exclusions remain.
  * Numeric comparisons detect counterexamples; agreement at samples is
  * not a mathematical proof of global equivalence.
  */

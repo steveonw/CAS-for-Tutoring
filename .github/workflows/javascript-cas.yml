@@ -63,11 +63,8 @@ jobs:
           (google-chrome --version || google-chrome-stable --version)
       - name: Exercise the actual offline calculator in Chromium
         run: npm run test:browser
-      # This detects known MathJax rendering regressions. It is intentionally
-      # non-blocking until the reported \exponentialE bug is fixed; a passing
-      # workflow does not mean this visual audit passed.
-      - name: Audit MathJax derivative rendering (known baseline defects)
-        continue-on-error: true
+      # A MathJax rendering error now fails CI.
+      - name: Verify MathJax derivative rendering
         run: npm run test:render
       - uses: actions/upload-artifact@v4
         if: always()
