@@ -19,16 +19,35 @@ button.secondary{background:#25344e}.note{font-size:.91rem;color:#a6b9cf}
 small{color:#b6c3d8}details{margin-top:16px}summary{cursor:pointer}
 #latex-source{font:14px/1.4 ui-monospace,monospace;margin-top:8px}#output{min-height:30px}
 @media(max-width:650px){.columns{grid-template-columns:1fr}main,.panel{padding:16px}}
+
+.walkthrough{padding:14px 0;border-top:1px solid #435573;margin-top:20px}
+.walkthrough h2{font-size:1.25rem;color:#b7e4ff}
+.step-card{padding:18px;background:#0e1a2c;border:1px solid #486281;border-radius:12px;margin:14px 0}
+.step-card h3{font-size:1rem;color:#a5f3fc;margin-top:0}
+.step-card .math{margin:12px 0;background:#162741}
+.step-nav{display:flex;gap:8px;flex-wrap:wrap}
+.step-nav button,.practice button{margin:4px 0}
+button:disabled{opacity:.4;cursor:not-allowed}
+.practice{margin:17px 0;background:#121d30;border:1px solid #334155;border-radius:11px;padding:16px}
+.practice h3{margin:0;font-size:1rem}
+.practice label{margin:9px 0 6px}
+.practice select{width:100%;max-width:400px}
+.all-steps{margin-top:14px}
+.all-steps li{padding:8px 0;border-bottom:1px solid #314259}
+.all-steps li strong{color:#c3edfb}
+.answer-area{margin:14px 0}
+.answer-title{margin-top:12px}
 </style>
 <script src="./mathjax-config.js"></script>
 <script defer src="./vendor/mathjax-tex-svg.js"></script>
 <script defer src="./vendor/nerdamer.bundle.js"></script>
 <script defer src="./cas-adapter.js"></script>
+<script defer src="./vendor/step-engine.bundle.js"></script>
 <script defer src="./app.js"></script>
 </head>
 <body>
 <h1>Math Dreamweaver · Calculus Lab</h1>
-<p>Symbolic math you can actually read. <strong>LaTeX display + optional LaTeX input</strong>, calculated entirely on your computer with Nerdamer and rendered with MathJax.</p>
+<p><strong>See how a derivative is solved, one rule at a time.</strong> CortexJS records real intermediate steps; Nerdamer computes a second symbolic answer, and MathJax renders both as textbook mathematics. Everything works offline.</p>
 <main>
 <div class="columns">
   <div><label for="operation">Operation</label>
@@ -54,7 +73,7 @@ small{color:#b6c3d8}details{margin-top:16px}summary{cursor:pointer}
 </main>
 <section class="panel">
 <h2>How this helps you learn</h2>
-<p>The CAS supplies a symbolic result; MathJax typesets it into textbook notation. The <strong>study prompts are not a fabricated derivation</strong>. To see selected derivative rules one step at a time, open the <a href="./learn.html">step-by-step learning tutor</a>.</p>
+<p><strong>Guided differentiation now lives inside this calculator.</strong> Use <em>Next step</em>, <em>Why this rule?</em>, <em>Hint</em>, or predict the next rule before revealing it. For integration, limits and other operations, we show the symbolic result but do not pretend to have a verified step trace. You can also open the <a href="./learn.html">original derivative tutor</a>.</p>
 <p class="note">Inspired by EquationWright's bundled MathJax 3.2.2 (TeX → SVG) approach. No CDN, analytics, or internet connection is used by this finished offline package. Input supports a deliberately limited LaTeX subset.</p>
 </section>
 </body></html>

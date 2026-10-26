@@ -5,6 +5,7 @@
  */
 const fs = require('node:fs');
 const path = require('node:path');
+const esbuild = require('esbuild');
 const root = path.resolve(__dirname, '..');
 const vendor = path.join(root, 'offline', 'vendor');
 fs.mkdirSync(vendor, { recursive: true });
@@ -35,6 +36,19 @@ fs.copyFileSync(nerdamerJS, path.join(vendor, 'nerdamer.bundle.js'));
 fs.copyFileSync(mathjaxJS, path.join(vendor, 'mathjax-tex-svg.js'));
 copyLicense('nerdamer', 'NERDAMER-LICENSE.txt');
 copyLicense('mathjax', 'MATHJAX-LICENSE.txt');
+copyLicense('@cortex-js/compute-engine', 'CORTEXJS-LICENSE.txt');
+
+// Pin the rule-tracing engine and bundle it for offline use, including file://.
+esbuild.buildSync({
+  entryPoints: [path.join(root, 'lib', 'step-engine.mjs')],
+  bundle: true,
+  platform: 'browser',
+  format: 'iife',
+  target: 'es2022',
+  minify: true,
+  outfile: path.join(vendor, 'step-engine.bundle.js'),
+  logLevel: 'info'
+});
 fs.copyFileSync(path.join(root, 'lib', 'cas-adapter.js'), path.join(root, 'offline', 'cas-adapter.js'));
 
 // Keep the original stand-alone tutor as the source of truth. Its bundled copy
@@ -52,6 +66,6 @@ const enhanced = original.replace('</body>', scripts + '\n</body>');
 fs.writeFileSync(path.join(root, 'offline', 'learn.html'), enhanced, 'utf8');
 
 console.log('Offline-ready directory:', path.join(root, 'offline'));
-console.log('Keep the whole offline/ folder together; both pages are independent of any CDN.');
+console.log('Keep the whole offline/ folder together; step tracing also works without a CDN.');
 
 require('./build-single-file.cjs');

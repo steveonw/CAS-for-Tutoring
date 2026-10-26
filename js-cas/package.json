@@ -1,18 +1,23 @@
 {
   "name": "math-dreamweaver-javascript-cas",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "license": "MIT",
-  "description": "Offline-first Calculus I tutoring with Nerdamer CAS and MathJax LaTeX rendering",
+  "description": "Offline Calculus I tutor with Nerdamer results, CortexJS recorded derivative steps and MathJax",
   "scripts": {
-    "test": "node --test test/*.test.cjs",
-    "build:offline": "node scripts/build-offline.cjs"
+    "test": "node --test test/*.test.cjs test/*.test.mjs",
+    "build:offline": "node scripts/build-offline.cjs",
+    "build:steps": "esbuild lib/step-engine.mjs --bundle --platform=browser --format=iife --target=es2022 --minify --outfile=offline/vendor/step-engine.bundle.js"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "dependencies": {
     "nerdamer": "2.0.0",
-    "mathjax": "3.2.2"
+    "mathjax": "3.2.2",
+    "@cortex-js/compute-engine": "0.159.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12"
   }
 }

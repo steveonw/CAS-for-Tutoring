@@ -13,6 +13,7 @@ const scripts = [
   ['./vendor/mathjax-tex-svg.js', 'vendor/mathjax-tex-svg.js'],
   ['./vendor/nerdamer.bundle.js', 'vendor/nerdamer.bundle.js'],
   ['./cas-adapter.js', 'cas-adapter.js'],
+  ['./vendor/step-engine.bundle.js', 'vendor/step-engine.bundle.js'],
   ['./app.js', 'app.js']
 ];
 function safeForScript(value) {
@@ -34,7 +35,8 @@ for (const [src, local] of scripts) {
 }
 const licenses = [
   ['mathjax', 'MATHJAX-LICENSE.txt'],
-  ['nerdamer', 'NERDAMER-LICENSE.txt']
+  ['nerdamer', 'NERDAMER-LICENSE.txt'],
+  ['cortexjs', 'CORTEXJS-LICENSE.txt']
 ].map(([id, file]) => {
   const content = fs.readFileSync(path.join(directory, 'vendor', file), 'utf8');
   return '<template id="license-' + id + '">' + encodeText(content) + '</template>';
