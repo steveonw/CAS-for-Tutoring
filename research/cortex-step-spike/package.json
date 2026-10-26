@@ -1,0 +1,19 @@
+{
+  "name": "cortex-step-research",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "probe": "node probe.mjs",
+    "bundle": "esbuild browser.mjs --bundle --platform=browser --format=iife --minify --outfile=dist/step-engine.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@cortex-js/compute-engine": "0.159.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12"
+  }
+}
