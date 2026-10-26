@@ -40,7 +40,7 @@ async function main() {
     assert.equal(await page.locator('.all-steps li').count(),3);
     await page.getByRole('button',{name:'Reveal final CAS answer'}).click();
     assert.equal(await page.locator('.answer-area').isVisible(),true);
-    await page.locator('.step-card .math mjx-container').waitFor({timeout:30000});
+    await page.locator('.step-card .math mjx-container').first().waitFor({timeout:30000});
     await page.screenshot({path:path.join(reports,'guided-derivative.png'),fullPage:true});
 
     // Switch to another rule and ensure the trace changes, not just the final answer.
@@ -82,7 +82,7 @@ async function main() {
       throw error;
     }
     assert.match(await single.locator('.step-card h3').innerText(),/Step 1 of 3/);
-    await single.locator('.step-card .math mjx-container').waitFor({timeout:30000});
+    await single.locator('.step-card .math mjx-container').first().waitFor({timeout:30000});
     await single.screenshot({path:path.join(reports,'single-file-guided.png'),fullPage:true});
 
     assert.deepEqual(remoteRequests,[],'Offline app must not attempt remote requests');
