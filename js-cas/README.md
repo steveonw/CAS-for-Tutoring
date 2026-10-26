@@ -1,45 +1,54 @@
-# JavaScript CAS prototype (Nerdamer)
+# JavaScript CAS + MathJax offline edition
 
-This **optional JavaScript alternative to the Python/SymPy edition** uses [Nerdamer 2.0](https://nerdamer.com/) to compute symbolic results locally. The existing project-root `index.html` remains the separate offline step-by-step derivative prototype.
+A **JavaScript alternative to the Python/SymPy CAS**. Nerdamer 2.0.0 calculates symbolic math, and the same **MathJax 3.2.2 SVG** pattern used in [EquationWright](https://github.com/steveonw/equationwright) displays results as LaTeX. Both libraries are packaged locally.
 
-## What it supports
+## Features
 
-Differentiation, antiderivatives, simplification, expansion, factoring, solving for x, and elementary limits. Nerdamer may leave unsupported operations unevaluated, in which case the adapter explicitly reports failure. Computation is *not* the same as a verified handwritten step-by-step explanation.
+- Differentiate, integrate, simplify, expand, factor, solve equations for x, and evaluate supported limits.
+- Choose **Calculator syntax** or **LaTeX input**. Example LaTeX input: `\\frac{x^3}{3}`.
+- See the problem and computed answer typeset as textbook mathematics, including integrals, fractions, roots and derivatives.
+- Expand *View / select LaTeX source* to copy the computed answer into notes.
+- Open the bundled **learn.html** for a step-by-step derivative demonstration, with local MathJax enhancing supported rule expressions.
+- No runtime network, server, API key, or student-account requirement.
 
-## Install and run
+## Download: no development tools required
 
-Install Node.js 20 or newer. **One-time online setup:**
+Open the latest successful [JavaScript CAS workflow](../.github/workflows/javascript-cas.yml) on GitHub Actions and download the **math-dreamweaver-offline-js-cas-latex** artifact. Unzip the archive, keep the files together, and double-click `index.html`. It also contains `learn.html` and **`calculus-lab-single-file.html`**. You can copy that one file by itself to run the CAS.
 
-```sh
+## Build it yourself (one-time online installation)
+
+Install Node.js 20+ and run:
+
+```bash
 cd js-cas
 npm install
 npm test
 npm run build:offline
 ```
 
-Then open **`js-cas/offline/index.html`** in a browser, using the whole `offline/` folder. The bundle also contains **`learn.html`**, a copy of the original rule-by-rule derivative tutor, linked from the CAS interface. It works without an internet connection thereafter. You can zip/copy that folder onto an offline computer. It contains a packaged Nerdamer bundle, its Apache-2.0 license, and the app.
+Then copy the entire `js-cas/offline/` folder to your offline computer. The builder also creates **`calculus-lab-single-file.html`**: a self-contained HTML calculator with embedded Nerdamer and MathJax. It includes third-party license texts in HTML `<template>` elements.
 
-An automated GitHub Actions workflow builds a downloadable offline-folder artifact, so users can get it without installing Node.js themselves.
+The folder-based edition copies:
+- `vendor/nerdamer.bundle.js` (Nerdamer 2.0.0)
+- `vendor/mathjax-tex-svg.js` (MathJax 3.2.2)
+- `vendor/NERDAMER-LICENSE.txt` and `vendor/MATHJAX-LICENSE.txt`
+- `cas-adapter.js`, plus enhanced `learn.html`.
 
-## Why Nerdamer?
+## Implementation
 
-The 2.0 release includes symbolic differentiation, integration, limits, and equation solving in one package. Unlike Math.js, it supports a broader set of calculus operations out of the box. Math.js is still worth considering later for educational expression trees and transparent transformations.
+- `lib/cas-adapter.js` — symbolically computes and converts to/from TeX; disallows unsupported TeX macros.
+- `offline/index.html`, `app.js` — accessible browser interface and copyable TeX source.
+- `offline/mathjax-config.js` — local MathJax TeX-to-SVG configuration.
+- `offline/lesson-math.js` — TeX-enhanced rendering of supported derivative tutor steps.
+- `scripts/build-offline.cjs` — pinned offline package generator with license verification.
+- `test/cas.test.cjs` — symbolic, TeX and safety checks.
 
-## Source files
+## Educational boundaries
 
-- `lib/cas-adapter.js`: shared browser/Node module, input validation, CAS dispatch.
-- `offline/index.html` + `offline/app.js`: local browser UI; scripts referenced by local paths.
-- `scripts/build-offline.cjs`: copies the Nerdamer browser bundle and license into `offline/vendor/`.
-- `test/cas.test.cjs`: basic automated functional checks.
+A symbolic **answer** is not the same thing as the underlying human-worked **steps**. The CAS interface currently emits *study prompts*, which are expressly not a trace of the CAS internal algorithms. The separate lesson covers selected elementary derivative rules but cannot explain arbitrary advanced calculus problems.
 
-## Educational integrity
-
-Study prompts are **not** described as steps taken by Nerdamer. A future deterministic tutoring layer will explicitly trace transformations, explain each rule, and verify equivalence with the CAS. Integral results include the arbitrary constant `+ C` in the displayed answer.
+Nerdamer and LaTeX syntax are restricted to variable x and supported functions. Integral display includes `+ C`. Domain assumptions and non-elementary integrals can still require human checking.
 
 ## Licensing and privacy
 
-This repository retains its MIT license. The separately packaged Nerdamer dependency is **Apache-2.0 licensed**; the build copies its original license, and no ownership of it is claimed. No remote services or telemetry are used at runtime. Calculations take place entirely in your browser.
-
-## Limitations
-
-Early integration, limits, non-elementary expressions and equations may be unsupported; do not trust an answer solely because it was returned by a CAS. Only x is supported in this first prototype. The first build requires Node/npm and internet access to fetch the dependency; the built app itself does not.
+Our project code is MIT. Nerdamer and MathJax are independently Apache-2.0; their licenses are copied into the generated offline package. The application has no telemetry or runtime network requirement. No EquationWright application source is copied; its offline MathJax technique is the architectural reference.

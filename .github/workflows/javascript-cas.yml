@@ -22,21 +22,34 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Install exact Nerdamer version
+      - name: Install pinned Nerdamer and MathJax
         run: npm install --no-audit --no-fund
-      - name: Test symbolic operations
+      - name: Test symbolic math and TeX conversions
         run: npm test
       - name: Build offline distribution
         run: npm run build:offline
-      - name: Verify offline files
+      - name: Verify offline math renderer and licenses
         run: |
           test -s offline/index.html
           test -s offline/learn.html
           test -s offline/app.js
+          test -s offline/mathjax-config.js
+          test -s offline/lesson-math.js
           test -s offline/cas-adapter.js
           test -s offline/vendor/nerdamer.bundle.js
+          test -s offline/vendor/mathjax-tex-svg.js
           test -s offline/vendor/NERDAMER-LICENSE.txt
+          test -s offline/vendor/MATHJAX-LICENSE.txt
+          grep -q 'lesson-math.js' offline/learn.html
+          grep -q 'mathjax-tex-svg.js' offline/learn.html
+          node --check offline/app.js
+          node --check offline/lesson-math.js
+          test -s offline/calculus-lab-single-file.html
+          node --check scripts/build-single-file.cjs
+          ! grep -Ei '<script[^>]* src=' offline/calculus-lab-single-file.html
+          grep -q 'license-mathjax' offline/calculus-lab-single-file.html
+          grep -q 'license-nerdamer' offline/calculus-lab-single-file.html
       - uses: actions/upload-artifact@v4
         with:
-          name: math-dreamweaver-offline-js-cas
+          name: math-dreamweaver-offline-js-cas-latex
           path: js-cas/offline/

@@ -1,44 +1,51 @@
 # CAS for Tutoring — Math Dreamweaver Calculus Lab
 
-An **offline-first Calculus I tutoring project** combining deterministic symbolic mathematics with student-friendly explanations.
+An **offline-first Calculus I tutor** that separates correct symbolic calculation from the explanation of each mathematical rule.
 
-## Three ways to use the project
+## Choose a learning tool
 
-**1. Step-by-step browser tutor (zero installation):** Download [index.html](index.html), open it in a browser and work through supported elementary derivatives one rule at a time. No connection needed.
+**1. Step-by-step practice:** Open the [original single-file tutor](index.html) offline to review a small set of derivative rules. It needs no installation and does not require MathJax.
 
-**2. JavaScript CAS (offline after a one-time build):** The [js-cas](js-cas/) edition uses **Nerdamer 2.0** for symbolic differentiation, integration, simplification, factoring, expansion, equation solving, and limits. Follow the [JavaScript setup instructions](js-cas/README.md) to build a self-contained *folder* that works offline. The GitHub Actions workflow also packages it as a downloadable artifact.
+**2. JavaScript CAS + beautiful math:** The [JavaScript edition](js-cas/) combines **Nerdamer 2.0.0** with **MathJax 3.2.2** for LaTeX math display and optional limited LaTeX input. The offline package also includes an enhanced copy of the original practice tutor. Download the latest successful [Actions artifact](https://github.com/steveonw/CAS-for-Tutoring/actions/workflows/javascript-cas.yml) (named `math-dreamweaver-offline-js-cas-latex`), unzip it, and open `index.html`. No network, Python, or Node.js is needed to *use* the resulting offline package. For a single-file version, use `calculus-lab-single-file.html` from the same artifact.
 
-**3. Python/SymPy CAS:** The [desktop Python edition](desktop/calculus_lab_desktop.py) remains available for wider symbolic computation. Install Python, then `python -m pip install -r desktop/requirements.txt`, and run `python desktop/calculus_lab_desktop.py`.
+**3. Python CAS:** The [SymPy desktop edition](desktop/calculus_lab_desktop.py) remains available for broader symbolic calculations. One-time setup: `python -m pip install -r desktop/requirements.txt`. Run `python desktop/calculus_lab_desktop.py`.
 
-## Why two engines?
+## What LaTeX adds
 
-Nerdamer works in the browser and can eliminate Python installation for routine offline use. SymPy remains useful for broad mathematics and cross-checking results. Both return **CAS-computed answers**, not necessarily a verified derivation. Our tutoring layer must explain actual transformations, not guess which steps the CAS took.
+Input ordinary expressions such as `(x^2+3)^4` or a supported TeX formula such as `\\frac{x^3}{3}`. Nerdamer converts the expression, computes symbolically, and outputs LaTeX. A locally bundled MathJax turns that into readable textbook-style fractions, roots, integrals, derivatives, and limits. You can reveal and copy the raw answer LaTeX in the interface.
 
-The zero-installation root [index.html](index.html) already explains selected differentiation rules but only supports limited syntax. The new `js-cas/` interface expands the operations supported *without falsely claiming to explain each step*.
+**Important:** Math rendering is not a solution derivation. The CAS edition provides math answers and named study prompts; the separate rule tutor supports step-by-step explanations for selected derivatives only.
+
+## How to build offline from source
+
+```sh
+cd js-cas
+npm install
+npm test
+npm run build:offline
+```
+
+Copy the complete `js-cas/offline/` folder to your offline computer and open its `index.html`. The build downloads dependencies **once** and vendors both JavaScript libraries and their license files into the distribution. See the [JavaScript edition README](js-cas/README.md) for details.
 
 ## Repository map
 
-- `index.html` — offline, elementary derivative explanation interface
-- `js-cas/` — Nerdamer-powered browser CAS, build instructions, and tests
-- `desktop/` — Python/SymPy command-line CAS
-- `docs/SPEC.md` — product requirements and roadmap
-- `docs/JS_CAS_LIBRARIES.md` — JavaScript library research and architecture choice
-- `developer/` — earlier experimental test scripts; not automatically wired into the app
-- `.github/workflows/javascript-cas.yml` — JS tests and offline-package build
-- `LICENSE` — original MIT license (unchanged)
+- `index.html` — dependency-free, limited derivative teaching prototype
+- `js-cas/` — Nerdamer symbolic calculator, MathJax LaTeX renderer, offline packaging and tests
+- `desktop/` — SymPy command-line CAS
+- `docs/SPEC.md` — product architecture and roadmap
+- `docs/LATEX_INTEGRATION.md` — MathJax/EquationWright design notes and accepted LaTeX commands
+- `developer/` — earlier experimental test scripts (not automatically wired into current app)
+- `.github/workflows/javascript-cas.yml` — tests and downloadable offline package
+- `LICENSE` — original MIT license, untouched
 
-## Educational basis
+## Learning references
 
-Silvanus P. Thompson, *Calculus Made Easy*, especially chapters IV–VI and IX; OpenStax *Calculus Volume 1* for modern limits, continuity, and formal theorems.
+- Silvanus P. Thompson, *Calculus Made Easy*, especially chapters IV–VI and IX.
+- OpenStax, *Calculus Volume 1*, for modern derivative, limit, continuity and integral coverage.
+- [EquationWright](https://github.com/steveonw/equationwright) for the pinned MathJax offline-distribution pattern; no EquationWright application code has been copied.
 
-## Roadmap
+## Privacy, licenses and limitations
 
-Build a real rule-by-rule transformation graph for product/quotient/chain rules, algebraic simplification, and integrals; add interactive hints and student attempts, visual graphs, practice-history export, and cross-engine correctness checks. Document unsupported cases explicitly.
+The browser CAS works locally and does not make network requests at runtime. Don't commit student records, private worksheets or credentials to this public repository. The project uses MIT licensing for its own code; packaged **Nerdamer and MathJax** are separately distributed under Apache-2.0 with preserved licenses. The CAS and TeX input conversion do not support all possible mathematical expressions or LaTeX commands; unsupported cases should fail visibly.
 
-## Privacy and licensing
-
-Do not commit personal homework history, credentials, or student records to this public repository. Both browser editions run calculations locally; they make no network requests while being used offline. Project code is MIT; the bundled Nerdamer dependency is separately licensed Apache-2.0 and includes its license in generated offline packages.
-
-## Status
-
-Early educational prototypes. Check nontrivial answers by hand or with a second tool before using them for graded work.
+**Status:** Educational prototype. Verify nontrivial answers independently.

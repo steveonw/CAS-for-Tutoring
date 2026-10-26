@@ -37,3 +37,14 @@ The embedded HTML walkthrough does **not** currently cover every function type, 
 - Explanations identify only rules actually applied.
 - Existing repository license remains unchanged.
 - Unsupported inputs fail explicitly and never masquerade as solutions.
+
+
+## LaTeX / MathJax integration (implemented in js-cas)
+
+The JavaScript offline distribution pins Nerdamer 2.0.0 and MathJax 3.2.2. After a one-time npm install, \`npm run build:offline\` produces an entirely local browser folder with the two dependencies, licenses, a CAS interface, and an enhanced step tutor.
+
+Nerdamer handles symbolic operations and TeX conversion (\`convertFromLaTeX\`, \`toTeX\`). MathJax handles only presentation; it does not alter mathematical answers. The user can input basic LaTeX, view equations rendered via SVG, and copy answer LaTeX. Unsupported macros and formulas are rejected or visibly fall back to plain CAS output.
+
+This architecture follows EquationWright v7.3's independently pinned, self-contained MathJax offline-rendering approach. See \`docs/LATEX_INTEGRATION.md\` for source evidence, accepted commands, security and third-party notices. The project-root \`index.html\` remains standalone and dependency-free.
+
+**Unfinished:** A verified derivation graph, full MathLive-style visual editor, and comprehensive limit/integration teaching. These require separate reasoning and test coverage.

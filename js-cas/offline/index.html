@@ -1,21 +1,60 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Math Dreamweaver · Offline JavaScript CAS</title>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Math Dreamweaver · Offline LaTeX CAS</title>
 <style>
-:root{color-scheme:dark;font:16px/1.5 system-ui,sans-serif;background:#0c1121;color:#e5edf9}body{margin:auto;max-width:780px;padding:25px 16px}main{border:1px solid #334155;border-radius:16px;background:#151e32;padding:24px}h1{font-size:1.8rem;margin-bottom:0}p{color:#bac7dd}label{display:block;font-weight:650;margin:14px 0 5px}input,select,button{font:inherit;padding:11px;border:1px solid #61728e;border-radius:8px;background:#101a2a;color:#fff}input{width:100%;box-sizing:border-box}select{max-width:100%}button{border:0;background:#3565bf;cursor:pointer;margin-top:18px}button:hover{background:#487ee0}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #67e8f9}#output{margin-top:18px;white-space:pre-wrap;overflow-wrap:anywhere}.math{font-size:1.25rem;color:#a5f3fc}.error{color:#fca5a5}.note{font-size:.87rem;color:#9aaaca}ul{padding-left:23px}a{color:#93c5fd}
-</style></head><body>
-<h1>Math Dreamweaver</h1><p>Offline JavaScript CAS · Nerdamer 2.0</p>
-<main><label for="operation">Operation</label><select id="operation">
-<option value="differentiate">Differentiate</option><option value="integrate">Integrate</option>
-<option value="simplify">Simplify</option><option value="expand">Expand</option>
-<option value="factor">Factor</option><option value="solve">Solve for x</option><option value="limit">Limit as x approaches…</option>
-</select>
-<label for="expression">Enter expression in x</label><input id="expression" value="(x^2+3)^4" autocomplete="off" spellcheck="false">
-<div id="limit-entry" hidden><label for="point">Approach value</label><input id="point" value="0"></div>
-<button id="calculate">Calculate offline</button>
-<section id="output" aria-live="polite"></section></main>
-<p class="note">This edition computes answers, but does not yet show a verified derivation for every step. The original <a href="./learn.html">rule-by-rule teaching prototype</a> is a separate interface. Both are usable without a network connection after the JS build has been created.</p>
-<script src="./vendor/nerdamer.bundle.js"></script>
-<script src="./cas-adapter.js"></script>
-<script src="./app.js"></script>
+:root{color-scheme:dark;font:16px/1.5 system-ui,sans-serif;background:#0c1121;color:#e5edf9}
+*{box-sizing:border-box}body{margin:auto;max-width:900px;padding:26px 18px}
+h1{font-size:1.9rem;margin:0 0 4px}h2{font-size:1.15rem;margin:0 0 9px}
+p{color:#bac7dd;line-height:1.6}main,.panel{border:1px solid #334155;border-radius:16px;background:#151e32;padding:23px;margin-top:18px}
+label{display:block;font-weight:650;margin:16px 0 5px}input,textarea,select,button{font:inherit;border:1px solid #61728e;border-radius:9px;background:#101a2a;color:#fff}
+input,textarea,select{padding:10px}input,textarea{width:100%;resize:vertical}
+input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid #67e8f9}
+select{max-width:100%}button{cursor:pointer;background:#3565bf;border:0;padding:11px 14px;margin:9px 8px 0 0}button:hover{background:#487ee0}
+button.secondary{background:#25344e}.note{font-size:.91rem;color:#a6b9cf}
+.math{font-size:1.15rem;overflow-x:auto;padding:16px 10px;margin:9px 0;background:#0c1428;border:1px solid #314259;border-radius:10px;text-align:center}
+.math mjx-container{max-width:100%}.math-error{color:#fca5a5}ul{padding-left:22px}a{color:#93c5fd}
+.columns{display:grid;grid-template-columns:1fr 1fr;gap:14px}.inline{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+small{color:#b6c3d8}details{margin-top:16px}summary{cursor:pointer}
+#latex-source{font:14px/1.4 ui-monospace,monospace;margin-top:8px}#output{min-height:30px}
+@media(max-width:650px){.columns{grid-template-columns:1fr}main,.panel{padding:16px}}
+</style>
+<script src="./mathjax-config.js"></script>
+<script defer src="./vendor/mathjax-tex-svg.js"></script>
+<script defer src="./vendor/nerdamer.bundle.js"></script>
+<script defer src="./cas-adapter.js"></script>
+<script defer src="./app.js"></script>
+</head>
+<body>
+<h1>Math Dreamweaver · Calculus Lab</h1>
+<p>Symbolic math you can actually read. <strong>LaTeX display + optional LaTeX input</strong>, calculated entirely on your computer with Nerdamer and rendered with MathJax.</p>
+<main>
+<div class="columns">
+  <div><label for="operation">Operation</label>
+  <select id="operation">
+    <option value="differentiate">Differentiate</option><option value="integrate">Integrate</option>
+    <option value="simplify">Simplify</option><option value="expand">Expand</option>
+    <option value="factor">Factor</option><option value="solve">Solve for x</option>
+    <option value="limit">Limit as x approaches…</option>
+  </select></div>
+  <div><label for="input-format">Input notation</label>
+  <select id="input-format">
+    <option value="cas">Calculator syntax</option>
+    <option value="latex">LaTeX</option>
+  </select></div>
+</div>
+<label for="expression">Expression in x</label>
+<textarea id="expression" rows="2" autocapitalize="off" autocomplete="off" spellcheck="false">(x^2+3)^4</textarea>
+<p id="input-help" class="note">Try (x^2+3)^4, sin(x)/x, or (x+1)^3.</p>
+<div id="limit-entry" hidden><label for="point">Limit approach value</label><input id="point" value="0" placeholder="0"></div>
+<button type="button" id="calculate">Calculate and typeset</button>
+<button type="button" class="secondary" id="example">Try example</button>
+<section id="output" aria-live="polite"></section>
+</main>
+<section class="panel">
+<h2>How this helps you learn</h2>
+<p>The CAS supplies a symbolic result; MathJax typesets it into textbook notation. The <strong>study prompts are not a fabricated derivation</strong>. To see selected derivative rules one step at a time, open the <a href="./learn.html">step-by-step learning tutor</a>.</p>
+<p class="note">Inspired by EquationWright's bundled MathJax 3.2.2 (TeX → SVG) approach. No CDN, analytics, or internet connection is used by this finished offline package. Input supports a deliberately limited LaTeX subset.</p>
+</section>
 </body></html>
