@@ -31,6 +31,7 @@ jobs:
       - name: Verify offline files
         run: |
           test -s offline/index.html
+          test -s offline/learn.html
           test -s offline/app.js
           test -s offline/cas-adapter.js
           test -s offline/vendor/nerdamer.bundle.js

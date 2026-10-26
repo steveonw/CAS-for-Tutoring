@@ -17,7 +17,7 @@ npm test
 npm run build:offline
 ```
 
-Then open **`js-cas/offline/index.html`** in a browser, using the whole `offline/` folder. It works without an internet connection thereafter. You can zip/copy that folder onto an offline computer. It contains a packaged Nerdamer bundle, its Apache-2.0 license, and the app.
+Then open **`js-cas/offline/index.html`** in a browser, using the whole `offline/` folder. The bundle also contains **`learn.html`**, a copy of the original rule-by-rule derivative tutor, linked from the CAS interface. It works without an internet connection thereafter. You can zip/copy that folder onto an offline computer. It contains a packaged Nerdamer bundle, its Apache-2.0 license, and the app.
 
 An automated GitHub Actions workflow builds a downloadable offline-folder artifact, so users can get it without installing Node.js themselves.
 
