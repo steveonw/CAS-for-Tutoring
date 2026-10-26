@@ -4,7 +4,7 @@ A **fully offline JavaScript CAS and guided Calculus I derivative tutor**. Nerda
 
 ## Features
 
-**v0.3.1 correctness fixes:** `log(x)` has the same natural-logarithm meaning in both engines (displayed as `\\ln`), `\\exponentialE` renders in offline MathJax, all emitted differentiation rule IDs have student-readable names, and true numerical coefficients are taught as the constant-multiple rule. Each step shows the before and after expressions. Exact repeated steps are omitted.
+**v0.3.1 correctness fixes:** `log(x)` has the same natural-logarithm meaning in both engines (displayed as `\ln`), `\exponentialE` renders in offline MathJax, all emitted differentiation rule IDs have student-readable names, and true numerical coefficients are taught as the constant-multiple rule. Each step shows the before and after expressions. Exact repeated steps are omitted.
 
 - **Built-in derivative breakdown**: real CortexJS `explain('D')` transformations, each rendered as a formula with the rule and a textbook reference.
 - **One step at a time**: previous/next, reveal all, hidden final CAS answer, “Why this rule?”, and a hint/quiz that lets you predict which rule comes next.

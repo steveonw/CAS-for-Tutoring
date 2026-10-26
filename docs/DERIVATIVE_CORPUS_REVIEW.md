@@ -8,11 +8,11 @@ All changes are tracked in [PR #7](https://github.com/steveonw/CAS-for-Tutoring/
 ## What was fixed
 
 1. **Logarithms.** Nerdamer uses natural `log()`, while CortexJS would read
-   serialized `\\mathrm{log}` as base 10. We normalize **Nerdamer-generated
-   TeX only** to `\\ln` before parsing for step tracing or rendering. This
+   serialized `\mathrm{log}` as base 10. We normalize **Nerdamer-generated
+   TeX only** to `\ln` before parsing for step tracing or rendering. This
    also fixes `x^x` and `2^x` answer display. Numerical samples verify no
    detected counterexample in the regression corpus.
-2. **Exponentials.** Add a local MathJax `\\exponentialE` macro rendering
+2. **Exponentials.** Add a local MathJax `\exponentialE` macro rendering
    Euler's number upright. The render-check browser script now **fails CI**
    for a MathJax `merror`.
 3. **Named rules.** CortexJS IDs for chain, exponential and general-power
