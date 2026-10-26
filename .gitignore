@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+# Developer/editor local files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
+# Do not commit personal learner records or exported study notes
+study-notes/
+private/
+personal/
+*study_notes*.txt
+*study-notes*.txt
+*.local.json
+.env
+.env.*
