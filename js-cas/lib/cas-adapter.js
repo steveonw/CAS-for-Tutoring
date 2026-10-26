@@ -92,11 +92,19 @@
     // Nerdamer 2.0 exports TeX from expressions and also a public converter.
     // A missing converter must not be passed off as a valid mathematical formula.
     if (value && typeof value.toTeX === 'function') {
-      try { return value.toTeX(); } catch (ignored) { /* use converter below */ }
+      try {
+        var rendered = value.toTeX();
+        if (typeof rendered === 'string' && rendered.trim())
+          return rendered.replace(/\\mathrm\s*\{\s*log\s*\}/g, '\\ln');
+      } catch (ignored) { /* use converter below */ }
     }
     var latex = nerdamer.convertToTeX(textOf(value));
     if (typeof latex !== 'string' || !latex.trim()) throw new Error('CAS did not return displayable LaTeX.');
-    return latex;
+    // Nerdamer's log(x) is the natural logarithm. Its TeX serializer emits
+    // \mathrm{log}, which CortexJS interprets as base 10. Normalize the
+    // *trusted Nerdamer serialization* to \ln before displaying or tracing.
+    // Do not rewrite arbitrary user LaTeX or a base-specific logarithm.
+    return latex.replace(/\\mathrm\s*\{\s*log\s*\}/g, '\\ln');
   }
 
   function relevantRules(expression, operation) {
