@@ -36,7 +36,7 @@ for (const [src, local] of scripts) {
   if (local === 'vendor/step-engine.bundle.js') {
     const encoded = Buffer.from(data, 'utf8').toString('base64');
     inline.push('<script>\n/* Bundled offline derivative step engine (build-time trusted) */\n' +
-      '(0,eval)(atob("' + encoded + '"));\n</script>');
+      '(0,eval)(new TextDecoder().decode(Uint8Array.from(atob("' + encoded + '"), c => c.charCodeAt(0))));\n</script>');
   } else {
     inline.push('<script>\n/* Embedded offline asset: ' + local + ' */\n' +
       safeForScript(data) + '\n</script>');
