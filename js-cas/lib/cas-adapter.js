@@ -1,6 +1,6 @@
 /* Math Dreamweaver — shared Node/browser CAS adapter.
- * Nerdamer (Apache-2.0) performs symbolic calculations.
- * This adapter intentionally does NOT invent worked derivations.
+ * Nerdamer computes symbolic results; MathJax (in the browser) only renders TeX.
+ * Study prompts are NOT a claim about internal step-by-step CAS derivations.
  */
 (function (host, factory) {
   if (typeof module === 'object' && module.exports) {
@@ -20,10 +20,16 @@
     'asin', 'acos', 'atan', 'sinh', 'cosh', 'tanh',
     'exp', 'log', 'sqrt', 'abs', 'pi', 'e', 'E'
   ]);
+  // A deliberately conservative LaTeX input subset. Rendering a TeX string
+  // is not permission to execute arbitrary TeX macros or HTML extensions.
+  var allowedLatexCommands = new Set([
+    'frac', 'dfrac', 'tfrac', 'sqrt', 'sin', 'cos', 'tan',
+    'ln', 'log', 'exp', 'pi', 'cdot', 'times', 'left', 'right'
+  ]);
 
   function validateExpression(text, label) {
-    if (typeof text !== 'string' || !text.trim() || text.length > 160) {
-      throw new Error((label || 'Expression') + ' must be 1–160 characters.');
+    if (typeof text !== 'string' || !text.trim() || text.length > 180) {
+      throw new Error((label || 'Expression') + ' must be 1–180 characters.');
     }
     if (!/^[A-Za-z0-9+\-*/^().,=\s]+$/.test(text)) {
       throw new Error('Use mathematical notation only (no scripts or commands).');
@@ -37,13 +43,64 @@
     return text.trim();
   }
 
+  function validateLatex(text) {
+    if (typeof text !== 'string' || !text.trim() || text.length > 240) {
+      throw new Error('LaTeX input must be 1–240 characters.');
+    }
+    if (!/^[A-Za-z0-9+\-*/^().,=\s\\{}\[\]]+$/.test(text)) {
+      throw new Error('Unsupported LaTeX characters. Use fractions, roots, powers, and elementary functions.');
+    }
+    var commands = text.match(/\\[A-Za-z]+/g) || [];
+    for (var i = 0; i < commands.length; i++) {
+      var name = commands[i].slice(1);
+      if (!allowedLatexCommands.has(name)) {
+        throw new Error('Unsupported LaTeX command: ' + commands[i]);
+      }
+    }
+    // Reject stray backslashes, including \\, \;, and other non-command sequences.
+    var withoutCommands = text.replace(/\\[A-Za-z]+/g, '');
+    if (withoutCommands.indexOf('\\') >= 0) {
+      throw new Error('LaTeX backslashes must introduce a supported command.');
+    }
+    var freeWords = withoutCommands.match(/[A-Za-z]+/g) || [];
+    for (var j = 0; j < freeWords.length; j++) {
+      if (!new Set(['x', 'pi', 'e', 'E']).has(freeWords[j])) {
+        throw new Error('Only the variable x and supported constants are allowed.');
+      }
+    }
+    return text.trim();
+  }
+
   function textOf(result) {
     return result && typeof result.text === 'function'
       ? result.text() : String(result);
   }
 
+  function parseInput(expression, format) {
+    if (format === 'cas') return validateExpression(expression, 'Expression');
+    if (format !== 'latex') throw new Error('Unknown input format.');
+    var latex = validateLatex(expression);
+    try {
+      var parsed = nerdamer.convertFromLaTeX(latex);
+      return validateExpression(textOf(parsed), 'Parsed LaTeX expression');
+    } catch (err) {
+      throw new Error('Unable to interpret this LaTeX input: ' + (err && err.message ? err.message : String(err)));
+    }
+  }
+
+  function teXOf(value) {
+    // Nerdamer 2.0 exports TeX from expressions and also a public converter.
+    // A missing converter must not be passed off as a valid mathematical formula.
+    if (value && typeof value.toTeX === 'function') {
+      try { return value.toTeX(); } catch (ignored) { /* use converter below */ }
+    }
+    var latex = nerdamer.convertToTeX(textOf(value));
+    if (typeof latex !== 'string' || !latex.trim()) throw new Error('CAS did not return displayable LaTeX.');
+    return latex;
+  }
+
   function relevantRules(expression, operation) {
-    // Study prompts, not a claim about an actual internal CAS derivation.
+    // These are learning cues, not a transcript of how Nerdamer calculated.
     if (operation === 'differentiate') {
       var notes = ['Differentiate with respect to x; check the expression’s structure.'];
       if (/\b(sin|cos|tan)\s*\(/.test(expression)) notes.push('Review trigonometric derivative rules.');
@@ -61,12 +118,22 @@
     return ['Check that the result is equivalent to the starting expression wherever both are defined.'];
   }
 
+  function operationTeX(operation, expressionTex, pointTex) {
+    switch (operation) {
+      case 'differentiate': return '\\frac{d}{dx}\\left(' + expressionTex + '\\right)';
+      case 'integrate': return '\\int\\left(' + expressionTex + '\\right)\\,dx';
+      case 'limit': return '\\lim_{x\\to ' + pointTex + '}\\left(' + expressionTex + '\\right)';
+      default: return expressionTex;
+    }
+  }
+
   function calculate(operation, expression, opts) {
     opts = opts || {};
     if (!operations.includes(operation)) throw new Error('Unknown CAS operation.');
     var variable = opts.variable || 'x';
     if (variable !== 'x') throw new Error('This version works with x only.');
-    var input = validateExpression(expression, 'Expression');
+    var format = opts.inputFormat || 'cas';
+    var input = parseInput(expression, format);
     var point = operation === 'limit'
       ? validateExpression(String(opts.point === undefined ? '0' : opts.point), 'Limit point') : null;
     var result;
@@ -87,14 +154,46 @@
     if (!answer || /^(integrate|limit|diff)\s*\(/i.test(answer)) {
       throw new Error('The CAS returned an unevaluated operation; no solution claimed.');
     }
+
+    var latexExpression, latexAnswer, latexPoint;
+    try {
+      latexExpression = teXOf(nerdamer(input));
+    } catch (ignoredInput) {
+      // Validated LaTeX source can be displayed directly; never use unvalidated user input.
+      latexExpression = format === 'latex' ? validateLatex(expression) : null;
+    }
+    try { latexAnswer = teXOf(result); }
+    catch (ignoredOutput) { latexAnswer = null; }
+    if (point !== null) {
+      try { latexPoint = teXOf(nerdamer(point)); }
+      catch (ignoredPoint) { latexPoint = point; }
+    }
+    var latexOperation = latexExpression
+      ? operationTeX(operation, latexExpression, latexPoint) : null;
+    var displayLatex = latexAnswer
+      ? latexAnswer + (operation === 'integrate' ? ' + C' : '') : null;
+
     return {
-      operation: operation, expression: input,
-      answer: answer, displayAnswer: answer + (operation === 'integrate' ? ' + C' : ''),
+      operation: operation,
+      inputFormat: format,
+      expression: input,
+      answer: answer,
+      displayAnswer: answer + (operation === 'integrate' ? ' + C' : ''),
+      latexExpression: latexExpression,
+      latexOperation: latexOperation,
+      latexAnswer: latexAnswer,
+      displayLatex: displayLatex,
+      latexAvailable: !!(latexOperation && displayLatex),
       studyPrompts: relevantRules(input, operation),
       explanationStatus: 'CAS result only — no verified step-by-step derivation yet.',
       library: 'Nerdamer 2.0.0'
     };
   }
 
-  return Object.freeze({ calculate: calculate, operations: operations.slice() });
+  return Object.freeze({
+    calculate: calculate,
+    operations: operations.slice(),
+    parseInput: parseInput,
+    validateLatex: validateLatex
+  });
 });
