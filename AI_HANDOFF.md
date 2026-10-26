@@ -117,4 +117,40 @@ GitHub artifacts may expire. If a link no longer works, rebuild the project or r
 6. **Limits:** The researched `explain()` API did not offer a documented step-by-step limit mode. Build limits separately: substitution, factoring, rationalization, one-sided reasoning, trig limits, continuity, etc.
 7. **MathLive is research-only.** There is currently no installed MathLive visual math field. The UI has a textarea and a calculator/LaTeX notation selector; supported names/macros are intentionally limited.
 8. **Single-file implementation caution:** `build-single-file.cjs` embeds the *trusted build-time* CortexJS JavaScript as base64 and evaluates it locally because directly inserting its large bundle into HTML caused a parser syntax error. This is **not evaluation of user input**, but is a CSP/security/maintainability tradeoff. Retain the browser smoke test when changing it.
-9. **Licensing/privacy:** Preserve the original project MIT `LICENSE`; retain separately packaged
+9. **Licensing/privacy:** Preserve the original project MIT `LICENSE`; retain separately packaged third-party licenses/notices for Nerdamer, MathJax and CortexJS. Do not commit tokens, student records, private homework or personal data.
+10. **Documentation is layered:** `docs/SPEC.md` retains historical limitations alongside newer implemented features. The latest source and tests outrank stale paragraphs. Update docs after shipping changes.
+11. **Avoid false offline claims:** npm installation is an online build step; the *generated distribution* is offline, without runtime CDN. Check both folder and single-file apps for accidental network requests.
+
+## 6. What to build next, in order
+
+**A. Teach genuine student-written next steps.** Let learners enter the next algebra/derivative expression; compare it safely with the recorded transformation, carry domain assumptions forward, and explain errors. Preserve the existing simpler multiple-choice rule quiz. Provide progressive hints without revealing the answer too early.
+
+**B. Make the existing derivative explanations better.** Explain inner/outer functions for chain rule, give concrete before→after equations, display proper algebraic simplifications, and improve "Why?" so it adds information beyond repeating a description. Map rules to *Calculus Made Easy* / OpenStax with verified references. Add regression problems for trig, exponential, logarithmic and nested derivatives.
+
+**C. Add actual integration breakdowns.** Investigate the demonstrated `explain('Integrate')` / Rubi rules; translate valid machine IDs into student-friendly power, u-substitution, algebraic rewrite and integration-by-parts reasoning. Test against representative Calculus I exercises and mark unsupported cases.
+
+**D. Handle limits rigorously.** Design an independently audited rule-based trace layer; do not reconstruct fictional steps from a final numerical limit.
+
+**E. Improve input and accessibility.** Consider offline MathLive with bundled fonts, plus reliable keyboard entry, responsive mobile layout and screen reader labels. Don't make typing LaTeX mandatory.
+
+**F. Increase mathematical verification.** Maintain a 30–100-problem corpus with correct answers, domains, transformations, unsupported cases, tests against a second symbolic engine and numerical checks where mathematically valid.
+
+**G. Keep the repo reliable.** Update `README.md`, `docs/SPEC.md` and this handoff on meaningful changes. Keep the single-file offline artifact functional and third-party licenses intact.
+
+## 7. Future AI working agreement
+
+- The user explicitly wants an AI assistant to **work directly in the GitHub repository**. Past assistance successfully used the GitHub connector with write permission. **Access permissions do not carry across AI sessions automatically**—verify your own capability before promising a commit.
+- Inspect latest `main`, GitHub Actions, open PRs, source code and tests **before** changing anything. If the reference commit here is old, update the snapshot and avoid replacing newer code.
+- Prefer a small feature branch / PR and clear change description. Run `npm test`, `npm run build:offline`, `npm run test:browser` (or the equivalent complete CI) and verify the final `main` run and download. If something fails, report the real status rather than claiming success.
+- Treat user mathematical learning as the product objective: **actual steps, WHY, hint/practice, reliable math, offline ownership**.
+- Separate **implemented**, **tested prototype**, **proposed**, and **not supported** clearly. Do not pretend that Rubi integration or a MathLive editor is already in production.
+- For any suspected mathematical discrepancy, preserve a reproducible test case and document whether it is a true contradiction, a domain issue, or an inconclusive simplifier result.
+- Do not require the user to supply a GitHub token in chat; do not broaden permissions beyond the named repository without explicit need.
+
+## 8. Paste this into another AI to resume
+
+> I own an offline Calculus I tutoring project called **Math Dreamweaver: Calculus Lab**. The real code is at **https://github.com/steveonw/CAS-for-Tutoring**. First read the root **`AI_HANDOFF.md`** and verify the latest GitHub source, tests, open pull requests, and Actions. I want a **step-by-step educational CAS**, not just answers: actual intermediate equations, named rules, why each step works, hints, practice, LaTeX and fully offline use. The project currently uses **CortexJS + Nerdamer + MathJax**, plus a Python/SymPy alternative. The guided derivative breakdown is implemented and tested; **full integration, limits, and student-entered intermediate steps remain unfinished**. Work directly in the repository when the GitHub connector is available, preserve licenses and existing features, run full offline browser tests, and verify your commits and downloadable artifacts.
+
+---
+
+*End of handoff, dated October 26, 2026. Always recheck the live repository before treating this as current.*
