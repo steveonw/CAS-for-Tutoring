@@ -2,6 +2,8 @@
 
 An **offline-first Calculus I tutor** that separates correct symbolic calculation from the explanation of each mathematical rule.
 
+**Continuing this project with another AI?** Read the [AI handoff and verified project snapshot](AI_HANDOFF.md) first. It covers the current architecture, working tests, offline build instructions, unfinished features and a ready-to-paste continuation prompt.
+
 ## Choose a learning tool
 
 **1. Step-by-step practice:** Open the [original single-file tutor](index.html) offline to review a small set of derivative rules. It needs no installation and does not require MathJax.
