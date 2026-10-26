@@ -11,7 +11,7 @@ async function main() {
   const root = path.resolve(__dirname, '..');
   const reports = path.join(root,'reports');
   fs.mkdirSync(reports,{recursive:true});
-  const browser = await chromium.launch({ headless:true });
+  const browser = await chromium.launch({ headless:true, channel:'chrome' });
   const pageErrors = [];
   const remoteRequests = [];
   try {

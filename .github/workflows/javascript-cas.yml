@@ -55,8 +55,10 @@ jobs:
           grep -q 'license-mathjax' offline/calculus-lab-single-file.html
           grep -q 'license-nerdamer' offline/calculus-lab-single-file.html
           grep -q 'license-cortexjs' offline/calculus-lab-single-file.html
-      - name: Install Chromium for offline UI verification
-        run: npx playwright install --with-deps chromium
+      - name: Verify preinstalled Chrome for offline UI tests
+        run: |
+          command -v google-chrome || command -v google-chrome-stable
+          (google-chrome --version || google-chrome-stable --version)
       - name: Exercise the actual offline calculator in Chromium
         run: npm run test:browser
       - uses: actions/upload-artifact@v4
