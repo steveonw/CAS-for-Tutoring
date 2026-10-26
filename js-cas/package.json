@@ -1,0 +1,17 @@
+{
+  "name": "math-dreamweaver-javascript-cas",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Offline-first Calculus I CAS experiment using Nerdamer 2.0",
+  "scripts": {
+    "test": "node --test test/*.test.cjs",
+    "build:offline": "node scripts/build-offline.cjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "nerdamer": "2.0.0"
+  }
+}

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Math Dreamweaver · Offline JavaScript CAS</title>
+<style>
+:root{color-scheme:dark;font:16px/1.5 system-ui,sans-serif;background:#0c1121;color:#e5edf9}body{margin:auto;max-width:780px;padding:25px 16px}main{border:1px solid #334155;border-radius:16px;background:#151e32;padding:24px}h1{font-size:1.8rem;margin-bottom:0}p{color:#bac7dd}label{display:block;font-weight:650;margin:14px 0 5px}input,select,button{font:inherit;padding:11px;border:1px solid #61728e;border-radius:8px;background:#101a2a;color:#fff}input{width:100%;box-sizing:border-box}select{max-width:100%}button{border:0;background:#3565bf;cursor:pointer;margin-top:18px}button:hover{background:#487ee0}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #67e8f9}#output{margin-top:18px;white-space:pre-wrap;overflow-wrap:anywhere}.math{font-size:1.25rem;color:#a5f3fc}.error{color:#fca5a5}.note{font-size:.87rem;color:#9aaaca}ul{padding-left:23px}a{color:#93c5fd}
+</style></head><body>
+<h1>Math Dreamweaver</h1><p>Offline JavaScript CAS · Nerdamer 2.0</p>
+<main><label for="operation">Operation</label><select id="operation">
+<option value="differentiate">Differentiate</option><option value="integrate">Integrate</option>
+<option value="simplify">Simplify</option><option value="expand">Expand</option>
+<option value="factor">Factor</option><option value="solve">Solve for x</option><option value="limit">Limit as x approaches…</option>
+</select>
+<label for="expression">Enter expression in x</label><input id="expression" value="(x^2+3)^4" autocomplete="off" spellcheck="false">
+<div id="limit-entry" hidden><label for="point">Approach value</label><input id="point" value="0"></div>
+<button id="calculate">Calculate offline</button>
+<section id="output" aria-live="polite"></section></main>
+<p class="note">This edition computes answers, but does not yet show a verified derivation for every step. The original <a href="./learn.html">rule-by-rule teaching prototype</a> is a separate interface. Both are usable without a network connection after the JS build has been created.</p>
+<script src="./vendor/nerdamer.bundle.js"></script>
+<script src="./cas-adapter.js"></script>
+<script src="./app.js"></script>
+</body></html>
