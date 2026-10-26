@@ -17,8 +17,12 @@ async function main() {
   try {
     browser=await chromium.launch({channel:'chrome',headless:true});
   } catch(e) {
-    console.error('Google Chrome unavailable. Install Chrome or adjust this runner for Playwright Chromium.');
-    throw e;
+    // Local developers can use Playwright's downloaded Chromium instead.
+    // GitHub Actions uses the preinstalled Google Chrome for speed.
+    try { browser=await chromium.launch({headless:true}); }
+    catch(second) {
+      throw new Error('Neither Google Chrome nor Playwright Chromium was available: '+second.message);
+    }
   }
   const errors=[],failures=[];
   try {
