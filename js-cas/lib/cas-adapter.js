@@ -75,7 +75,7 @@
         case 'differentiate': result = nerdamer.diff(input, variable); break;
         case 'integrate': result = nerdamer.integrate(input, variable); break;
         case 'simplify': result = nerdamer.simplify(input); break;
-        case 'expand': result = nerdamer.expand(input); break;
+        case 'expand': result = nerdamer(input).expand(); break;
         case 'factor': result = nerdamer.factor(input); break;
         case 'solve': result = nerdamer.solve(input, variable); break;
         case 'limit': result = nerdamer.limit(input, variable, point); break;
