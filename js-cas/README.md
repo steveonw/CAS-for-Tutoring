@@ -17,11 +17,11 @@ A **fully offline JavaScript CAS and guided Calculus I derivative tutor**. Nerda
 
 ## Download: no development tools required
 
-Open the latest successful [JavaScript CAS workflow](../.github/workflows/javascript-cas.yml) on GitHub Actions and download the **math-dreamweaver-offline-js-cas-latex** artifact. Unzip the archive, keep the files together, and double-click `index.html`. It also contains `learn.html` and **`calculus-lab-single-file.html`**. You can copy that one file by itself to run the CAS.
+Open the latest successful [JavaScript CAS workflow](../.github/workflows/javascript-cas.yml) on GitHub Actions and download the **math-dreamweaver-calculus-lab-guided-steps** artifact. Unzip the archive, keep the files together, and double-click `index.html`. It also contains `learn.html` and **`calculus-lab-single-file.html`**. You can copy that one file by itself to run the CAS.
 
 ## Build it yourself (one-time online installation)
 
-Install Node.js 20+ and run:
+Install Node.js 22+ and run:
 
 ```bash
 cd js-cas

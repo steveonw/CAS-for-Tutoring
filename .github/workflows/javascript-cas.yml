@@ -22,7 +22,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install pinned Nerdamer and MathJax
+      - name: Install pinned CAS, renderer and UI-test dependencies
         run: npm install --no-audit --no-fund
       - name: Test symbolic math and TeX conversions
         run: npm test
@@ -68,5 +68,5 @@ jobs:
           path: js-cas/reports/
       - uses: actions/upload-artifact@v4
         with:
-          name: math-dreamweaver-offline-js-cas-latex
+          name: math-dreamweaver-calculus-lab-guided-steps
           path: js-cas/offline/
