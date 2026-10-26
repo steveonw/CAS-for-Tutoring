@@ -104,13 +104,19 @@
     parent.appendChild(lesson);
     text(lesson, 'h2', 'Step-by-step breakdown (' + steps.length + ' recorded steps)');
     text(lesson, 'p', 'Every displayed transformation and rule description comes from CortexJS explain(D), not from a guessed solution.', 'note');
-    var cross = trace.agreement === true
-      ? 'The recorded derivative agrees symbolically with Nerdamer.'
-      : 'CortexJS and Nerdamer have not established symbolic agreement for this input. Check advanced problems independently.';
+    var verification = trace.verification || {};
+    var cross = verification.status === 'symbolic'
+      ? 'CortexJS and Nerdamer agree by the symbolic equivalence check.'
+      : verification.status === 'samples-consistent'
+        ? 'Values match at ' + verification.samplesChecked + ' sampled points. This is NOT proof of equivalence: domain assumptions still matter.'
+        : 'Symbolic agreement has not been established. Check advanced problems independently.';
     text(lesson, 'p', cross, 'note');
 
     var card = document.createElement('div'); card.className = 'step-card'; lesson.appendChild(card);
     var progress = text(card, 'h3', '');
+    text(card, 'p', 'Before this rule', 'note');
+    var beforeMath = formula(card, '', '');
+    text(card, 'p', 'After this rule', 'note');
     var stateMath = formula(card, '', '');
     var rule = text(card, 'p', '');
     var source = text(card, 'p', '', 'note');
@@ -159,6 +165,9 @@
         steps.forEach(function (step) {
           var li = document.createElement('li'); list.appendChild(li);
           text(li,'strong',step.rule);
+          text(li,'p','Before','note');
+          formula(li,step.beforeLatex,step.beforeLatex);
+          text(li,'p','After','note');
           formula(li,step.latex,step.latex);
           text(li,'p',step.reason);
         });
@@ -181,11 +190,12 @@
       if (requestId !== runId) return;
       var step = steps[index];
       progress.textContent = 'Step ' + (index + 1) + ' of ' + steps.length + ' — ' + step.rule;
+      updateFormula(beforeMath, step.beforeLatex);
       updateFormula(stateMath, step.latex);
-      rule.textContent = 'Rule: ' + step.reason;
-      source.textContent = 'Rule ID: ' + step.id + ' · ' + step.textbook;
+      rule.textContent = 'Rule: ' + step.rule;
+      source.textContent = 'Engine rule ID: ' + step.id + ' · ' + step.textbook;
       why.textContent = step.reason;
-      more.textContent = step.hint + ' ' + step.textbook;
+      more.textContent = step.hint;
       more.hidden = true;
       prev.disabled = index === 0;
       next.textContent = index === steps.length - 1 ? 'Reveal final answer' : 'Next step';
@@ -218,13 +228,31 @@
     }
     text(output, 'h2', 'Your problem');
     formula(output, result.latexOperation, result.expression);
+    if (/\blog\s*\(/.test(result.expression)) {
+      text(output, 'p', 'Here log means the natural logarithm (ln). For real-valued log, the argument must be positive.', 'note');
+    }
+    if (/^abs\s*\(x\)$/.test(result.expression)) {
+      text(output, 'p', 'The derivative of |x| is not defined at x = 0.', 'note');
+    }
+    if (/^x\^x$/.test(result.expression)) {
+      text(output, 'p', 'For the real logarithmic differentiation of x^x, assume x > 0.', 'note');
+    }
     var guided = false;
     if (result.operation === 'differentiate' && result.latexExpression && window.MathDreamweaverSteps) {
       try {
         var trace = window.MathDreamweaverSteps.explainDerivative(result.latexExpression, {
           checkLatex: result.latexAnswer
         });
-        guidedWalkthrough(output, trace, result, id);
+        if (trace.verification && trace.verification.status === 'conflict') {
+          text(output, 'p', 'Mathematical disagreement detected between the two symbolic engines. The walkthrough and final answer are withheld to avoid teaching a potentially incorrect result.', 'math-error');
+          if (trace.verification.mismatches.length) {
+            var m = trace.verification.mismatches[0];
+            text(output, 'p', 'At x = ' + m.x + ', CortexJS gives ' +
+              m.traceValue + ' while Nerdamer gives ' + m.casValue + '.', 'note');
+          }
+        } else {
+          guidedWalkthrough(output, trace, result, id);
+        }
         guided = true;
       } catch (error) {
         text(output, 'p', 'A verified derivative breakdown is unavailable: ' + error.message, 'note');

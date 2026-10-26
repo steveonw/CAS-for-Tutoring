@@ -2,14 +2,14 @@
  * Requires the offline build, and either a preinstalled Google Chrome or
  * Playwright Chromium installed via: npx playwright install chromium.
  * npm run test:render
- * The baseline is EXPECTED TO FAIL for \exponentialE until macro is fixed.
+ * A MathJax merror is a blocking regression.
  */
 const {chromium}=require('playwright');
 const {pathToFileURL}=require('node:url');
 const path=require('node:path');
 const problems=[
   'x^2*e^x','e^(3*x)','e^(sin(x))','(x^2+3)^4','sin(x^2)',
-  'x^x','(2*x+1)^3*(x-4)^2','x/sqrt(x+1)','log(x^2+1)','abs(x)'
+  'x^x','(2*x+1)^3*(x-4)^2','x/sqrt(x+1)','log(x)','log(x^2+1)','abs(x)'
 ];
 async function main() {
   const root=path.resolve(__dirname,'..');

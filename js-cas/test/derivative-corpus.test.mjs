@@ -1,6 +1,6 @@
 /* Expanded regression suite supplied by a collaborator and reviewed/adapted.
  * Test corpus contains 26 common derivatives. Known product bugs are marked
- * TODO: these reveal defects but do not block npm test until fixed.
+ * Known-bug checks are required to pass; no TODO exclusions remain.
  * Numeric comparisons detect counterexamples; agreement at samples is
  * not a mathematical proof of global equivalence.
  */
@@ -46,12 +46,8 @@ test('every corpus problem produces a recorded trace', async (t)=>{
   }
 });
 test('step trace final answer matches the CAS answer numerically', async (t)=>{
-  const knownBad = {
-    'log(x)': 'Nerdamer log = natural logarithm; CortexJS receives base-10 log',
-    'log(x^2+1)': 'Natural vs base-10 logarithm semantics disagree'
-  };
   for(const input of CORPUS) {
-    await t.test(input,{todo:knownBad[input]},()=>{
+    await t.test(input,()=>{
       const {result,trace}=run(input);
       for(const x of POINTS) {
         const a=cortexAt(trace.resultLatex,x);
@@ -62,8 +58,7 @@ test('step trace final answer matches the CAS answer numerically', async (t)=>{
     });
   }
 });
-test('every step maps to a named rule (not generic)',
-  {todo:'RULES lacks several CortexJS derivative rule IDs'},()=>{
+test('every step maps to a named rule (not generic)',()=>{
     const unnamed=[];
     for(const input of CORPUS) {
       for(const s of run(input).trace.steps) {
@@ -72,20 +67,17 @@ test('every step maps to a named rule (not generic)',
     }
     assert.deepEqual(unnamed,[]);
   });
-test('chain rule is its own family and quiz choice',
-  {todo:'chain-rule maps to other and no chain option'},()=>{
+test('chain rule is its own family and quiz choice',()=>{
     const {trace}=run('sin(x^2)');
     assert.equal(trace.steps[0].id,'derivative.chain-rule');
     assert.equal(trace.steps[0].family,'chain');
     assert.ok(ruleChoices.some(c=>c.value==='chain'));
   });
-test('constant multiples are not called the product rule',
-  {todo:'3x^2 and -5x currently labeled product'},()=>{
+test('constant multiples are not called the product rule',()=>{
     const {trace}=run('3*x^2-5*x+7');
     assert.deepEqual(trace.steps.filter(s=>s.family==='product').map(s=>s.latex),[]);
   });
-test('no adjacent step leaves expression text unchanged',
-  {todo:'some engine simplify steps are no-ops'},()=>{
+test('no adjacent step leaves expression text unchanged',()=>{
     const noops=[];
     for(const input of CORPUS) {
       const steps=run(input).trace.steps;
@@ -96,8 +88,7 @@ test('no adjacent step leaves expression text unchanged',
     }
     assert.deepEqual(noops,[]);
   });
-test('MathJax config includes each exponentialE macro emitted',
-  {todo:'MathJax config does not recognize \\exponentialE'},()=>{
+test('MathJax config includes each exponentialE macro emitted',()=>{
     const config=readFileSync(new URL('../offline/mathjax-config.js',import.meta.url),'utf8');
     const used=new Set();
     for(const input of CORPUS) {
@@ -108,3 +99,31 @@ test('MathJax config includes each exponentialE macro emitted',
     for(const macro of used)
       assert.match(config,new RegExp(macro),'missing MathJax macro '+macro);
   });
+
+test('natural logs are unambiguous in the actual Nerdamer-to-CortexJS pipeline',()=>{
+  for(const input of ['log(x)','log(x^2+1)','x^x','2^x']){
+    const {result,trace}=run(input);
+    assert.ok(!result.latexExpression.includes('\\mathrm{log}'),
+      'ambiguous input TeX: '+input);
+    assert.ok(!result.latexAnswer.includes('\\mathrm{log}'),
+      'ambiguous answer TeX: '+input);
+    assert.notEqual(trace.verification.status,'conflict',input+' disagrees');
+    assert.ok(trace.verification.samplesChecked>=3,input+' has insufficient checks');
+  }
+});
+test('sampling detects a counterexample to base-10 and natural-log equivalence',()=>{
+  // Deliberately use the raw, incorrect base-10 serialization as an attack
+  // regression: detected disagreement must block teaching.
+  const bad=explainDerivative('\\mathrm{log}(x)',{checkLatex:'\\frac{1}{x}'});
+  assert.equal(bad.verification.status,'conflict');
+  assert.ok(bad.verification.mismatches.some(m=>m.x>0 &&
+    Math.abs(m.traceValue-m.casValue)>0.01));
+});
+test('true two-variable product versus numerical constant multiple',()=>{
+  const actual=run('x^2*e^x').trace;
+  assert.equal(actual.steps[0].family,'product');
+  assert.ok(actual.steps.some(s=>s.family==='exponential'));
+  const constant=run('3*x^2-5*x+7').trace;
+  assert.ok(constant.steps.some(s=>s.family==='constant'));
+  assert.ok(constant.steps.every(s=>s.family!=='product'));
+});

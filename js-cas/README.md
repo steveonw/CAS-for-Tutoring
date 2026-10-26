@@ -4,9 +4,11 @@ A **fully offline JavaScript CAS and guided Calculus I derivative tutor**. Nerda
 
 ## Features
 
+**v0.3.1 correctness fixes:** `log(x)` has the same natural-logarithm meaning in both engines (displayed as `\ln`), `\exponentialE` renders in offline MathJax, all emitted differentiation rule IDs have student-readable names, and true numerical coefficients are taught as the constant-multiple rule. Each step shows the before and after expressions. Exact repeated steps are omitted.
+
 - **Built-in derivative breakdown**: real CortexJS `explain('D')` transformations, each rendered as a formula with the rule and a textbook reference.
 - **One step at a time**: previous/next, reveal all, hidden final CAS answer, “Why this rule?”, and a hint/quiz that lets you predict which rule comes next.
-- **Cross-engine check**: where provable by CortexJS, the derivative result is symbolically compared with Nerdamer. Other cases are labeled as unconfirmed, not automatically correct.
+- **Cross-engine check**: CortexJS/Nerdamer symbolic comparisons are supplemented with finite real-domain numeric samples. A counterexample blocks the derivative walkthrough and final answer; matching samples alone are **not** proof of equivalence. Unknown results are marked as unconfirmed.
 
 - Differentiate, integrate, simplify, expand, factor, solve equations for x, and evaluate supported limits.
 - Choose **Calculator syntax** or **LaTeX input**. Example LaTeX input: `\\frac{x^3}{3}`.
@@ -28,6 +30,8 @@ cd js-cas
 npm install
 npm test
 npm run build:offline
+npm run test:browser
+npm run test:render
 ```
 
 Then copy the entire `js-cas/offline/` folder to your offline computer. The builder also creates **`calculus-lab-single-file.html`**: a self-contained HTML calculator with embedded Nerdamer, CortexJS and MathJax, including the derivative walkthrough. It includes third-party license texts in HTML `<template>` elements.
@@ -48,6 +52,9 @@ The folder-based edition copies:
 - `scripts/build-offline.cjs` — pinned offline package generator with license verification.
 - `lib/step-engine.mjs` — verified derivative step recorder using CortexJS `explain()` and rule-specific teaching hints.
 - `test/cas.test.cjs` and `test/step-engine.test.mjs` — CAS, LaTeX, derivative steps, rule-check and safety checks.
+- `test/derivative-corpus.test.mjs` — strict 26-problem derivative regression set and log/constant/chain-rule validation.
+- `test/render-check.browser.cjs` — required MathJax error audit in Chrome, including exponentials.
+- `npm run audit:rules` — inspect engine rule IDs and actual AST transformations when extending calculus coverage.
 
 ## Educational boundaries
 

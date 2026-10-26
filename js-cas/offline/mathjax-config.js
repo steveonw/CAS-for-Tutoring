@@ -5,7 +5,9 @@ window.MathJax = {
   tex: {
     inlineMath: [['\\(', '\\)']],
     displayMath: [['\\[', '\\]']],
-    processEscapes: true
+    processEscapes: true,
+    // CortexJS serializes Euler's constant with this TeX macro.
+    macros: { exponentialE: '\\mathrm{e}' }
   },
   svg: { fontCache: 'local' },
   startup: { typeset: false },

@@ -1,6 +1,6 @@
 {
   "name": "math-dreamweaver-javascript-cas",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "license": "MIT",
   "description": "Offline Calculus I tutor with Nerdamer results, CortexJS recorded derivative steps and MathJax",
@@ -10,7 +10,8 @@
     "build:steps": "esbuild lib/step-engine.mjs --bundle --platform=browser --format=iife --target=es2022 --minify --outfile=offline/vendor/step-engine.bundle.js",
     "test:browser": "node test/browser-smoke.cjs",
     "test:render": "node test/render-check.browser.cjs",
-    "traces": "node scripts/print-derivative-traces.mjs"
+    "traces": "node scripts/print-derivative-traces.mjs",
+    "audit:rules": "node scripts/audit-derivative-rules.mjs"
   },
   "engines": {
     "node": ">=22"
