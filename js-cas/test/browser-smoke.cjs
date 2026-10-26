@@ -65,7 +65,22 @@ async function main() {
     });
     await single.goto(pathToFileURL(path.join(root,'offline','calculus-lab-single-file.html')).href,
       {waitUntil:'load',timeout:30000});
-    await single.locator('.step-card h3').waitFor({timeout:30000});
+    try {
+      await single.locator('.step-card h3').waitFor({timeout:12000});
+    } catch (error) {
+      console.error('SINGLE-FILE DIAGNOSTICS:', await single.evaluate(() => ({
+        title: document.title,
+        casLoaded: !!window.MathDreamweaverCAS,
+        stepLoaded: !!window.MathDreamweaverSteps,
+        nerdamerLoaded: !!window.nerdamer,
+        mathjaxLoaded: !!window.MathJax,
+        outputText: document.querySelector('#output')?.innerText,
+        scriptElements: document.querySelectorAll('script').length
+      })));
+      console.error('PAGE ERRORS:', pageErrors);
+      await single.screenshot({path:path.join(reports,'single-file-failed.png'),fullPage:true});
+      throw error;
+    }
     assert.match(await single.locator('.step-card h3').innerText(),/Step 1 of 3/);
     await single.locator('.step-card .math mjx-container').waitFor({timeout:30000});
     await single.screenshot({path:path.join(reports,'single-file-guided.png'),fullPage:true});
