@@ -55,6 +55,15 @@ jobs:
           grep -q 'license-mathjax' offline/calculus-lab-single-file.html
           grep -q 'license-nerdamer' offline/calculus-lab-single-file.html
           grep -q 'license-cortexjs' offline/calculus-lab-single-file.html
+      - name: Install Chromium for offline UI verification
+        run: npx playwright install --with-deps chromium
+      - name: Exercise the actual offline calculator in Chromium
+        run: npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: calculus-lab-browser-qa
+          path: js-cas/reports/
       - uses: actions/upload-artifact@v4
         with:
           name: math-dreamweaver-offline-js-cas-latex
