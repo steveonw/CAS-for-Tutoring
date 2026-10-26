@@ -44,6 +44,11 @@ jobs:
           grep -q 'mathjax-tex-svg.js' offline/learn.html
           node --check offline/app.js
           node --check offline/lesson-math.js
+          test -s offline/calculus-lab-single-file.html
+          node --check scripts/build-single-file.cjs
+          ! grep -Ei '<script[^>]* src=' offline/calculus-lab-single-file.html
+          grep -q 'license-mathjax' offline/calculus-lab-single-file.html
+          grep -q 'license-nerdamer' offline/calculus-lab-single-file.html
       - uses: actions/upload-artifact@v4
         with:
           name: math-dreamweaver-offline-js-cas-latex

@@ -53,3 +53,5 @@ fs.writeFileSync(path.join(root, 'offline', 'learn.html'), enhanced, 'utf8');
 
 console.log('Offline-ready directory:', path.join(root, 'offline'));
 console.log('Keep the whole offline/ folder together; both pages are independent of any CDN.');
+
+require('./build-single-file.cjs');
