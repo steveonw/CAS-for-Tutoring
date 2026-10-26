@@ -1,0 +1,40 @@
+name: CortexJS step research verification
+on:
+  push:
+    paths:
+      - 'research/cortex-step-spike/**'
+      - '.github/workflows/cortex-step-research.yml'
+  pull_request:
+    paths:
+      - 'research/cortex-step-spike/**'
+      - '.github/workflows/cortex-step-research.yml'
+  workflow_dispatch:
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: research/cortex-step-spike
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned libraries
+        run: npm install --no-audit --no-fund
+      - name: Verify recorded math steps
+        run: npm run probe
+      - name: Bundle for offline browsers
+        run: npm run bundle
+      - name: Inspect bundle size
+        run: |
+          ls -lh dist/step-engine.js
+          test -s dist/step-engine.js
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cortexjs-step-research
+          path: |
+            research/cortex-step-spike/reports/
+            research/cortex-step-spike/dist/
