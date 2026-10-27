@@ -1,6 +1,14 @@
 # v0.6 Design — Part-Aware Calculus Tutoring and Offline Math Input
 
-**Status: PROPOSED, not implemented.** Product baseline: JavaScript Calculus Lab v0.5.1. Tracking issue: [#11](https://github.com/steveonw/CAS-for-Tutoring/issues/11). This design integrates the external AI's review with stricter mathematical acceptance criteria. Do not advertise these goals as shipped until implementation PRs and offline tests pass.
+**Status: PARTIALLY IMPLEMENTED (v0.6.0-alpha.1).** Source-AST-based chain-rule part feedback, three progressive hint levels, and strict mathematical/browser tests are implemented. **MathLive visual input, arbitrary multi-step proof grading, and full product/quotient part decomposition are not implemented.** Tracking issue: [#11](https://github.com/steveonw/CAS-for-Tutoring/issues/11). This design integrates the external AI's review with stricter mathematical acceptance criteria. Do not advertise these goals as shipped until implementation PRs and offline tests pass.
+
+## What actually shipped in phase 1
+
+- `js-cas/lib/derivative-parts.mjs` constructs and symbolically verifies a chain-rule decomposition for supported composite powers, sine/cosine, natural logarithm, exponentials and square roots.
+- It labels an outside derivative as correct **only when** the student's unsimplified factors match and a different final derivative can be demonstrated at a sample point allowed by the recognized original real domain. It distinguishes an absent factor from a present but incorrect inside factor.
+- It returns structured `recognized`, `problemPart`, `hints`, and `evidence` fields; the UI typesets the outside/inside parts and reveals the full expression only with the third hint.
+- The pinned CortexJS parser recognizes legitimate `\\frac{d}{dx}` partial derivative lines. The strict regression suite and Chrome browser exercise this actual workflow, along with safe LaTeX input and the existing cross-engine disagreement guard.
+- **Still pending in issue #11:** MathLive offline visual editor, full product/quotient component decomposition and more general proof-like intermediate evaluation. The v0.6.0-alpha.1 release is **not the completed v0.6 milestone**.
 
 ## Why this milestone
 

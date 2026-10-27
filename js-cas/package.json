@@ -1,9 +1,9 @@
 {
   "name": "math-dreamweaver-javascript-cas",
-  "version": "0.5.1",
+  "version": "0.6.0-alpha.1",
   "private": true,
   "license": "MIT",
-  "description": "Offline Calculus I tutor with fair student-typed grading, flexible first rules, domain awareness and mistake feedback",
+  "description": "Offline Calculus I tutor with component-aware derivative feedback, three hint levels, and conservative domain checks",
   "scripts": {
     "test": "node --test test/*.test.cjs test/*.test.mjs",
     "build:offline": "node scripts/build-offline.cjs",
