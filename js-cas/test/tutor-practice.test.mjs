@@ -64,3 +64,10 @@ test('26 corpus transformations are accepted in their own original order',()=>{
     assert.equal(checkStudentStep(trace,-1,trace.steps[0].latex).status,'matched',input);
   }
 });
+
+test('a student-typed calculator expression can match a genuine final trace step',()=>{
+  const trace=explainDerivative('x^2');
+  const latex=cas.inputToLatex('2*x','cas');
+  const checked=checkStudentStep(trace,trace.steps.length-2,latex);
+  assert.ok(['matched','equivalent'].includes(checked.status),checked.message);
+});
