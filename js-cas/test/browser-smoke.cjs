@@ -73,6 +73,35 @@ async function main(){
     await page.locator('.step-card .math mjx-container').first().waitFor({timeout:30000});
     await page.screenshot({path:path.join(reports,'tutor-step-zero.png'),fullPage:true});
 
+    // Domain conditions appear with the recorded lesson and are partial.
+    assert.match(await page.locator('.domain-notes').innerText(),/domain|restriction/i);
+
+    // Actual student-generated calculator notation must be checked BEFORE
+    // the CAS simplifier removes x/x and its undefined point at x=0.
+    await page.locator('#expression').fill('x^2');
+    await page.getByRole('button',{name:'Start guided practice'}).click();
+    await page.locator('#student-step-format').selectOption('cas');
+    await page.locator('#student-next-step').fill('2*x^2/x');
+    await page.getByRole('button',{name:'Check my step'}).click();
+    assert.equal(await page.locator('#student-feedback').getAttribute('data-status'),'domain-mismatch');
+    assert.match(await page.locator('#student-feedback').innerText(),/x = 0/);
+    await page.screenshot({path:path.join(reports,'domain-hole-feedback.png'),fullPage:true});
+
+    // Missing the inner derivative must produce specific feedback, not a
+    // generic suggestion about all chain-rule problems.
+    await page.locator('#expression').fill('sin(x^2)');
+    await page.getByRole('button',{name:'Start guided practice'}).click();
+    await page.locator('#student-next-step').fill('cos(x^2)');
+    await page.getByRole('button',{name:'Check my step'}).click();
+    assert.equal(await page.locator('#student-feedback').getAttribute('data-status'),'mistake');
+    assert.equal(await page.locator('#student-feedback').getAttribute('data-mistake'),'chain-inner-derivative');
+    assert.match(await page.locator('#student-feedback').innerText(),/derivative of the inside/i);
+    await page.screenshot({path:path.join(reports,'chain-rule-feedback.png'),fullPage:true});
+
+    await page.locator('#expression').fill('log(x)');
+    await page.getByRole('button',{name:'Start guided practice'}).click();
+    assert.match(await page.locator('.domain-notes').innerText(),/positive/i);
+
     // Calculator Mode shows the answer immediately, without tutor questions.
     await page.locator('#study-mode').selectOption('calculator');
     assert.equal(await page.locator('.walkthrough').count(),0);
