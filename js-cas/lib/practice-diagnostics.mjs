@@ -55,7 +55,7 @@ function outerWithoutChain(ast){
     case 'Power':{
       const n=ast[2];
       if(typeof n==='number'&&n!==0)return n+'\\left('+u+'\\right)^{'+(n-1)+'}';
-      if(arg==='ExponentialE')return '\\exponentialE^{'+tex(ast[2])+'}';
+      if(['ExponentialE','E','e'].includes(arg))return '\\exp\\left('+tex(ast[2])+'\\right)';
       return null;
     }
     default:return null;
@@ -81,9 +81,40 @@ function quotientWrongPlus(ast){
   return '\\frac{\\left('+g+'\\right)\\left('+fp+'\\right)+\\left('+f+
     '\\right)\\left('+gp+'\\right)}{\\left('+g+'\\right)^2}';
 }
+function productOfDerivatives(ast) {
+  if(!Array.isArray(ast)||!['Multiply','InvisibleOperator'].includes(ast[0])||
+    ast.length!==3)return null;
+  const fp=differentiatedLatex(ast[1]),gp=differentiatedLatex(ast[2]);
+  if(!fp||!gp)return null;
+  return '\\left('+fp+'\\right)\\cdot\\left('+gp+'\\right)';
+}
+function quotientWrongReverse(ast) {
+  if(!Array.isArray(ast)||ast[0]!=='Divide')return null;
+  const f=tex(ast[1]),g=tex(ast[2]);
+  const fp=differentiatedLatex(ast[1]),gp=differentiatedLatex(ast[2]);
+  if(!fp||!gp)return null;
+  return '\\frac{\\left('+f+'\\right)\\left('+gp+
+    '\\right)-\\left('+g+'\\right)\\left('+fp+'\\right)}{\\left('+g+'\\right)^2}';
+}
+function unchangedPower(ast) {
+  // Canonical student error: n*x^n rather than n*x^(n-1).
+  let coefficient=1,core=ast;
+  if(Array.isArray(ast)&&['Multiply','InvisibleOperator'].includes(ast[0])&&ast.length===3){
+    const term=ast.slice(1).find(v=>typeof v==='number');
+    if(typeof term!=='number')return null;
+    coefficient=term;
+    core=ast.slice(1).find(v=>v!==term);
+  }
+  if(!Array.isArray(core)||core[0]!=='Power'||core[1]!=='x'||
+    typeof core[2]!=='number'||core[2]===0)return null;
+  return (coefficient*core[2])+'x^{'+core[2]+'}';
+}
 const MISTAKES=[
  {code:'chain-inner-derivative',message:'Your line matches differentiating the outside only. The chain rule also multiplies by the derivative of the inside. Identify the inner function and differentiate it.',guess:(ast)=>outerWithoutChain(ast)},
  {code:'quotient-sign',message:'Your line matches adding the quotient-rule contributions, but the quotient rule uses u′v − uv′ over v². Recheck the subtraction.',guess:(ast)=>quotientWrongPlus(ast)},
+ {code:'quotient-reversed',message:'Your quotient-rule numerator has the subtraction reversed. Use u′v − uv′, not uv′ − u′v.',guess:(ast)=>quotientWrongReverse(ast)},
+ {code:'product-derivatives-multiplied',message:'It looks as if you multiplied f′ and g′. The product rule adds two contributions: f′g + fg′.',guess:(ast)=>productOfDerivatives(ast)},
+ {code:'power-exponent-unchanged',message:'You brought down the exponent but did not reduce the power by one. For x^n, use n·x^(n−1).',guess:(ast)=>unchangedPower(ast)},
  {code:'constant-multiple',message:'Your line drops the numerical coefficient. The constant-multiple rule keeps that factor while you differentiate the variable part.',guess:(ast,answer)=>omittedConstant(ast,answer)},
  {code:'constant-not-zero',message:'Your line appears to keep an added constant. The derivative of a numerical constant is zero.',guess:(ast,answer)=>forgottenAdditiveConstant(ast,answer)}
 ];
