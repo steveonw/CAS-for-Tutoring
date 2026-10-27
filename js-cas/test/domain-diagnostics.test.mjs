@@ -82,6 +82,8 @@ test('product rule recognizes a single remaining contribution',()=>{
   assert.equal(r.code,'product-missing-term');
 });
 test('quotient rule identifies adding instead of subtracting',()=>{
+  const trace=lesson('(x^2+1)/x');
+  console.log('QUOTIENT_DEBUG',JSON.stringify({source:trace.originalLatex,result:trace.resultLatex,first:trace.steps[0]}));
   const r=grade('(x^2+1)/x','(2*x*x+(x^2+1))/x^2');
   assert.equal(r.status,'mistake',r.message);
   assert.equal(r.code,'quotient-sign');
