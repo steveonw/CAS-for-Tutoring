@@ -32,7 +32,7 @@ async function main() {
     for(const input of problems) {
       await page.locator('#operation').selectOption('differentiate');
       await page.locator('#expression').fill(input);
-      await page.getByRole('button',{name:'Calculate and typeset'}).click();
+      await page.getByRole('button',{name:'Start guided practice'}).click();
       await page.locator('.step-card h3').waitFor({timeout:30000});
       await page.getByRole('button',{name:'Show all transformations'}).click();
       await page.getByRole('button',{name:'Reveal final CAS answer'}).click();

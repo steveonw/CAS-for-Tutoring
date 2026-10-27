@@ -1,9 +1,9 @@
 {
   "name": "math-dreamweaver-javascript-cas",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "private": true,
   "license": "MIT",
-  "description": "Offline Calculus I tutor with Nerdamer results, CortexJS recorded derivative steps and MathJax",
+  "description": "Offline Calculus I Tutor Mode with Step 0, typed next steps, and quick symbolic CAS",
   "scripts": {
     "test": "node --test test/*.test.cjs test/*.test.mjs",
     "build:offline": "node scripts/build-offline.cjs",

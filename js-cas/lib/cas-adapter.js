@@ -198,10 +198,19 @@
     };
   }
 
+  // Convert a *validated* calculator expression to TeX for the step
+  // checker. This is notation conversion, not a proof of equivalence and
+  // not a record of a derivative transformation.
+  function inputToLatex(text, format) {
+    if (format === 'latex') return validateLatex(text);
+    return teXOf(nerdamer(parseInput(text, 'cas')));
+  }
+
   return Object.freeze({
     calculate: calculate,
     operations: operations.slice(),
     parseInput: parseInput,
+    inputToLatex: inputToLatex,
     validateLatex: validateLatex
   });
 });

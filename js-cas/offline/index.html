@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Math Dreamweaver · Offline LaTeX CAS</title>
+<title>Math Dreamweaver · Offline Calculus Tutor and CAS</title>
 <style>
 :root{color-scheme:dark;font:16px/1.5 system-ui,sans-serif;background:#0c1121;color:#e5edf9}
 *{box-sizing:border-box}body{margin:auto;max-width:900px;padding:26px 18px}
@@ -37,6 +37,13 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .all-steps li strong{color:#c3edfb}
 .answer-area{margin:14px 0}
 .answer-title{margin-top:12px}
+#study-mode{width:100%;max-width:100%;font-weight:600}
+.step-entry{margin-top:18px;padding-top:12px;border-top:1px solid #40536b}
+.step-entry h3{margin:0;font-size:1rem;color:#b7e4ff}
+.step-entry label{font-size:.93rem;margin-top:10px}
+.step-entry textarea{font-family:ui-monospace,SFMono-Regular,monospace;min-height:66px}
+.step-entry select{width:100%;max-width:360px}
+#student-feedback{min-height:1.5em}
 </style>
 <script src="./mathjax-config.js"></script>
 <script defer src="./vendor/mathjax-tex-svg.js"></script>
@@ -49,6 +56,12 @@ button:disabled{opacity:.4;cursor:not-allowed}
 <h1>Math Dreamweaver · Calculus Lab</h1>
 <p><strong>See how a derivative is solved, one rule at a time.</strong> CortexJS records real intermediate steps; Nerdamer computes a second symbolic answer, and MathJax renders both as textbook mathematics. Everything works offline.</p>
 <main>
+<label for="study-mode">How would you like to work?</label>
+<select id="study-mode">
+  <option value="tutor">Tutor Mode — practice each derivative step</option>
+  <option value="calculator">Calculator Mode — quick symbolic answers</option>
+</select>
+<p class="note">Tutor Mode starts at Step 0 so you can choose the first rule. Calculator Mode gives the immediate CAS result. Neither mode silently invents unsupported transformations.</p>
 <div class="columns">
   <div><label for="operation">Operation</label>
   <select id="operation">
@@ -67,13 +80,13 @@ button:disabled{opacity:.4;cursor:not-allowed}
 <textarea id="expression" rows="2" autocapitalize="off" autocomplete="off" spellcheck="false">(x^2+3)^4</textarea>
 <p id="input-help" class="note">Try (x^2+3)^4, sin(x)/x, or (x+1)^3.</p>
 <div id="limit-entry" hidden><label for="point">Limit approach value</label><input id="point" value="0" placeholder="0"></div>
-<button type="button" id="calculate">Calculate and typeset</button>
+<button type="button" id="calculate">Start guided practice</button>
 <button type="button" class="secondary" id="example">Try example</button>
 <section id="output" aria-live="polite"></section>
 </main>
 <section class="panel">
 <h2>How this helps you learn</h2>
-<p><strong>Guided differentiation now lives inside this calculator.</strong> Use <em>Next step</em>, <em>Why this rule?</em>, <em>Hint</em>, or predict the next rule before revealing it. For integration, limits and other operations, we show the symbolic result but do not pretend to have a verified step trace. You can also open the <a href="./learn.html">original derivative tutor</a>.</p>
+<p><strong>Tutor Mode:</strong> begin with Step 0, predict the first rule, type your own next expression, request a hint, then reveal the recorded transformation. <strong>Calculator Mode:</strong> see the symbolic answer immediately. Student-entered lines are checked conservatively: symbolic equality and finite counterexamples are useful, but neither samples nor CAS simplifications establish a complete domain-aware proof. Integration, limits and other operations do not yet have guided traces. The <a href="./learn.html">original derivative tutor</a> remains available.</p>
 <p class="note">Inspired by EquationWright's bundled MathJax 3.2.2 (TeX → SVG) approach. No CDN, analytics, or internet connection is used by this finished offline package. Input supports a deliberately limited LaTeX subset.</p>
 </section>
 </body></html>
