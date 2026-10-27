@@ -56,3 +56,7 @@ The offline JavaScript calculator now loads a locally packaged CortexJS Compute 
 The result of the rule-prediction quiz only indicates whether the student correctly identified the **next rule**, not whether an arbitrary intermediate expression is mathematically correct. Unsupported inputs and all other operations fail back to the original CAS without invented steps. Current packaging supports both a complete offline folder and a single-file `calculus-lab-single-file.html` edition. The original root derivative tutor and Python CAS remain unchanged.
 
 Future: structured student step entry, rigorous domain-aware equality validation, limit explanations, Rubi integration traces with readable rule names, and broader textbook regression coverage. See `docs/JS_STEP_TUTOR_RESEARCH_2026-10-26.md`.
+
+## Tutor Mode and Step 0 (v0.4.0)
+
+The JavaScript edition separates quick Calculator Mode (direct Nerdamer answer) and Tutor Mode (CortexJS-recorded derivative steps). The latter begins with an unsolved Step 0, checks the first rule, and allows students to enter a proposed next expression. Accepted results are narrowly labeled: exact trace match, proven symbolic equivalence under engine assumptions, skipped intermediate work, numeric counterexample, invalid input or unverified expression. Numerical sampling never proves functional identity or complete real-domain equivalence. The tutor offers no fictional working for integrals, limits and other operations. See `docs/TUTOR_MODE.md`.

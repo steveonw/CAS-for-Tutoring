@@ -1,13 +1,16 @@
-# JavaScript CAS + MathJax offline edition
+# JavaScript CAS and Tutor Mode — v0.4.0
 
 A **fully offline JavaScript CAS and guided Calculus I derivative tutor**. Nerdamer 2.0.0 computes the symbolic result, CortexJS Compute Engine 0.159.0 records the *actual derivative transformations* and rule IDs, and locally bundled MathJax 3.2.2 displays mathematical steps as LaTeX. It follows the offline packaging pattern of [EquationWright](https://github.com/steveonw/equationwright).
 
 ## Features
 
+**New in v0.4.0:** Tutor Mode (default) starts at Step 0, before any derivative step is revealed. Students identify the *first* rule, can type a proposed next line in calculator or restricted LaTeX syntax, receive cautious math-engine feedback, and then reveal the recorded transformation. Calculator Mode shows the Nerdamer answer immediately. Read [Tutor Mode guide](../docs/TUTOR_MODE.md) for the input and verification limitations.
+
+
 **v0.3.1 correctness fixes:** `log(x)` has the same natural-logarithm meaning in both engines (displayed as `\ln`), `\exponentialE` renders in offline MathJax, all emitted differentiation rule IDs have student-readable names, and true numerical coefficients are taught as the constant-multiple rule. Each step shows the before and after expressions. Exact repeated steps are omitted.
 
 - **Built-in derivative breakdown**: real CortexJS `explain('D')` transformations, each rendered as a formula with the rule and a textbook reference.
-- **One step at a time**: previous/next, reveal all, hidden final CAS answer, “Why this rule?”, and a hint/quiz that lets you predict which rule comes next.
+- **One step at a time**: Step 0 first-rule prediction, typed next line, previous/next, reveal all, hidden final CAS answer, “Why this rule?”, and hints.
 - **Cross-engine check**: CortexJS/Nerdamer symbolic comparisons are supplemented with finite real-domain numeric samples. A counterexample blocks the derivative walkthrough and final answer; matching samples alone are **not** proof of equivalence. Unknown results are marked as unconfirmed.
 
 - Differentiate, integrate, simplify, expand, factor, solve equations for x, and evaluate supported limits.
@@ -53,12 +56,13 @@ The folder-based edition copies:
 - `lib/step-engine.mjs` — verified derivative step recorder using CortexJS `explain()` and rule-specific teaching hints.
 - `test/cas.test.cjs` and `test/step-engine.test.mjs` — CAS, LaTeX, derivative steps, rule-check and safety checks.
 - `test/derivative-corpus.test.mjs` — strict 26-problem derivative regression set and log/constant/chain-rule validation.
+- `test/tutor-practice.test.mjs` — Step 0, typed work, skip-ahead and input-safety regression tests.
 - `test/render-check.browser.cjs` — required MathJax error audit in Chrome, including exponentials.
 - `npm run audit:rules` — inspect engine rule IDs and actual AST transformations when extending calculus coverage.
 
 ## Educational boundaries
 
-For **supported derivatives**, the CAS interface now uses CortexJS's recorded transformations, rather than generic study prompts. Students can reveal one step at a time, read the engine's explanation, see the Thompson chapter reference, and predict the next rule. The rule-choice checker assesses **rule identification only**, not an arbitrary mathematical expression. For unsupported derivatives, integrals, limits, factoring, and solving, it still shows a CAS result with an explicit limitation notice. No complete breakdown is claimed for those operations.
+For **supported derivatives**, the CAS interface now uses CortexJS's recorded transformations, rather than generic study prompts. Students can reveal one step at a time, read the engine's explanation, see the Thompson chapter reference, and predict the next rule. The rule-choice checker assesses **rule identification**. Student-entered expressions are evaluated conservatively: exact recorded step, symbolically equivalent under engine assumptions, skipped final answer, numerical counterexample or unverified. Neither symbolic simplification nor matching numerical samples is a complete domain-aware proof. For unsupported derivatives, integrals, limits, factoring, and solving, it still shows a CAS result with an explicit limitation notice. No complete breakdown is claimed for those operations.
 
 Nerdamer and LaTeX syntax are restricted to variable x and supported functions. Integral display includes `+ C`. Domain assumptions and non-elementary integrals can still require human checking.
 
