@@ -233,6 +233,12 @@ export function checkStudentStep(trace, viewedIndex, latex) {
     return {status:'invalid',message:'No active recorded step to check.'};
   const next=trace.steps[viewedIndex+1];
   if(!next) return {status:'complete',message:'You reached the end of the recorded steps.'};
+  // CortexJS may emit TeX macros beyond the public student-input subset.
+  // Its OWN recorded string is authoritative for exact next-line checking:
+  // compare this trusted trace text first rather than rejecting it as input.
+  // Do not run arbitrary student TeX that merely resembles the trace.
+  if(typeof latex==='string' && latex.trim()===next.latex)
+    return {status:'matched',message:'Your line matches the next recorded transformation. You can reveal it to check the rule.'};
   let proposed,required,final;
   try{
     proposed=parsedOrError(validateStudentLatex(latex));
