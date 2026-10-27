@@ -187,7 +187,82 @@ export function checkNextRule(trace,viewedIndex,selectedFamily){
   const next=trace.steps[viewedIndex+1];
   return !!next && next.family===selectedFamily;
 }
+// Interactive student practice is intentionally conservative. Exact parsed
+// matches are accepted as the expected recorded step. Verified symbolic
+// equivalence is reported separately; numeric samples can DISPROVE identity
+// but never establish it or certify domain restrictions.
+const STUDENT_TEX_COMMANDS=new Set([
+  'frac','dfrac','tfrac','sqrt','sin','cos','tan','sec','csc','cot',
+  'arcsin','arccos','arctan','sinh','cosh','tanh','ln','exp',
+  'pi','cdot','times','left','right','exponentialE'
+]);
+function validateStudentLatex(input) {
+  const source=normalizeText(input,360);
+  if(!/^[A-Za-z0-9+\-*/^().,=\s\\{}\[\]]+$/.test(source))
+    throw new Error('Use mathematical LaTeX only; no custom commands or HTML.');
+  const commands=[...source.matchAll(/\\([A-Za-z]+)/g)].map(m=>m[1]);
+  if(commands.some(name=>!STUDENT_TEX_COMMANDS.has(name)) ||
+    source.replace(/\\[A-Za-z]+/g,'').includes('\\'))
+    throw new Error('Only elementary math LaTeX commands are supported (use \\ln, not \\log).');
+  return source;
+}
+function parsedOrError(latex) {
+  const expression=engine.parse(latex);
+  if(!expression || expression.isValid===false)
+    throw new Error('This line could not be parsed as a valid mathematical expression.');
+  return expression;
+}
+function structuralMatch(a,b) {
+  return JSON.stringify(a.json)===JSON.stringify(b.json);
+}
+function sampledCounterexample(a,b) {
+  const checks=[0.2,0.45,0.7,0.85,1.2,1.8,2.5,-0.75,-1.5];
+  let samplesChecked=0;
+  for(const x of checks){
+    const aValue=finiteReal(a,x),bValue=finiteReal(b,x);
+    if(aValue===null || bValue===null) continue;
+    samplesChecked++;
+    if(Math.abs(aValue-bValue)>1e-7*Math.max(1,Math.abs(aValue),Math.abs(bValue)))
+      return {x,got:aValue,expected:bValue,samplesChecked};
+  }
+  return null;
+}
+export function checkStudentStep(trace, viewedIndex, latex) {
+  if(!trace || !Array.isArray(trace.steps) || !Number.isInteger(viewedIndex) ||
+    viewedIndex < -1 || viewedIndex>=trace.steps.length)
+    return {status:'invalid',message:'No active recorded step to check.'};
+  const next=trace.steps[viewedIndex+1];
+  if(!next) return {status:'complete',message:'You reached the end of the recorded steps.'};
+  let proposed,required,final;
+  try{
+    proposed=parsedOrError(validateStudentLatex(latex));
+    required=parsedOrError(next.latex);
+    final=parsedOrError(trace.resultLatex);
+  }catch(error){
+    return {status:'invalid',message:error.message};
+  }
+  // Checking exact next-line structure first means we do not mistake an
+  // algebraically equivalent final answer for the requested intermediate rule.
+  if(structuralMatch(proposed,required)) {
+    return {status:'matched',message:'Your line matches the next recorded transformation. You can reveal it to check the rule.'};
+  }
+  if(viewedIndex+1<trace.steps.length-1 &&
+    (structuralMatch(proposed,final) || proposed.isEqual(final)===true)) {
+    return {status:'skipped',message:'Your expression reaches the final derivative, but this exercise is asking for the next intermediate step. Try showing the rule you would use first.'};
+  }
+  const equivalent=proposed.isEqual(required);
+  if(equivalent===true){
+    return {status:'equivalent',message:'The engine finds your expression symbolically equivalent to the next line. It may use a different order of rules; this does not verify domains or the exact method.'};
+  }
+  const example=sampledCounterexample(proposed,required);
+  if(example){
+    return {status:'counterexample',x:example.x,message:'These expressions give different values at x = '+example.x+'. Recheck the rule; for a chain rule, did you differentiate the inside?'};
+  }
+  return {status:'unverified',message:'I could not verify this as the next transformation. It may need a different form, or the engine may be unable to prove it. Try a hint or reveal the step.'};
+}
 export const ruleChoices=CHOICES;
 if(typeof window!=='undefined'){
-  window.MathDreamweaverSteps=Object.freeze({explainDerivative,checkNextRule,ruleChoices});
+  window.MathDreamweaverSteps=Object.freeze({
+    explainDerivative,checkNextRule,checkStudentStep,ruleChoices
+  });
 }
