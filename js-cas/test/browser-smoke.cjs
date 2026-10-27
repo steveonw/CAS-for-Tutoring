@@ -121,6 +121,9 @@ async function main(){
     await page.getByRole('button',{name:'Check my step'}).click();
     assert.equal(await page.locator('#student-feedback').getAttribute('data-mistake'),'chain-inner-derivative');
     assert.match(await page.locator('#student-feedback').innerText(),/outside derivative is correct/i);
+    assert.equal(await page.locator('.feedback-parts').isVisible(),true);
+    assert.match(await page.locator('.feedback-parts').innerText(),/outside derivative|inside function/i);
+    await page.locator('.feedback-parts .math mjx-container').first().waitFor({timeout:30000});
     assert.equal(await page.locator('.progressive-hint').isVisible(),false);
     await page.getByRole('button',{name:/Show next hint/}).click();
     assert.equal(await page.locator('.progressive-hint').getAttribute('data-level'),'1');
@@ -138,8 +141,11 @@ async function main(){
 
     await page.locator('#student-next-step').fill('5*(3*x^2+1)^4*3*x');
     assert.equal(await page.locator('.progressive-hint').isVisible(),false);
+    assert.equal(await page.locator('.feedback-parts').isVisible(),false);
     await page.getByRole('button',{name:'Check my step'}).click();
     assert.equal(await page.locator('#student-feedback').getAttribute('data-mistake'),'chain-inner-incorrect');
+    assert.equal(await page.locator('.feedback-parts .math').count(),3);
+    assert.equal(await page.locator('.feedback-parts').isVisible(),true);
     assert.match(await page.locator('#student-feedback').innerText(),/inside/i);
     assert.doesNotMatch(await page.locator('#student-feedback').innerText(),/missing/i);
     await page.screenshot({path:path.join(reports,'part-aware-three-hints.png'),fullPage:true});
