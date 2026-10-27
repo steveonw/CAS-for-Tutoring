@@ -179,21 +179,76 @@
     text(entry,'h3','Write the next mathematical line');
     text(entry,'p','Write the next step or solve ahead in calculator syntax or LaTeX. A correct shortcut counts; you can return to review the recorded intermediate work.','note');
     var inputLabel = text(entry, 'label', 'Your next step');
-    inputLabel.htmlFor = 'student-next-step';
-    var attempt = document.createElement('textarea');
-    attempt.id = 'student-next-step'; attempt.rows = 2;
-    attempt.autocapitalize = 'off'; attempt.autocomplete = 'off'; attempt.spellcheck = false;
-    attempt.placeholder = 'e.g. 4*(x^2+3)^3*2*x';
-    entry.appendChild(attempt);
     var typeLabel = text(entry,'label','My input notation');
     typeLabel.htmlFor = 'student-step-format';
-    var attemptFormat = document.createElement('select'); attemptFormat.id = typeLabel.htmlFor;
-    [['cas','Calculator syntax'],['latex','LaTeX notation']].forEach(function (choice) {
-      var option = document.createElement('option'); option.value = choice[0];
-      option.textContent = choice[1]; attemptFormat.appendChild(option);
+    var attemptFormat = document.createElement('select');
+    attemptFormat.id = typeLabel.htmlFor;
+    var Mathfield = window.MathfieldElement ||
+      (window.customElements && window.customElements.get('math-field'));
+    var visualAvailable = typeof Mathfield === 'function';
+    var choices = visualAvailable
+      ? [['visual','Visual equation editor'],['cas','Calculator syntax'],['latex','LaTeX notation']]
+      : [['cas','Calculator syntax'],['latex','LaTeX notation']];
+    choices.forEach(function (choice) {
+      var option = document.createElement('option');option.value=choice[0];
+      option.textContent=choice[1];attemptFormat.appendChild(option);
     });
-    attemptFormat.value = format.value;
+    attemptFormat.value = visualAvailable ? 'visual' : format.value;
     entry.appendChild(attemptFormat);
+
+    // Visual math is an alternative INPUT, never a separate grading path.
+    // The exported LaTeX goes through the same safe allowlisted checker.
+    var mathWrapper = document.createElement('div');
+    mathWrapper.className='math-entry';entry.appendChild(mathWrapper);
+    var mathfield = null;
+    if (visualAvailable) {
+      Mathfield.fontsDirectory=null; // load local @font-face CSS, not a CDN.
+      Mathfield.soundsDirectory=null; // do not fetch optional sound files.
+      mathfield = new Mathfield();
+      mathfield.id='student-mathfield';
+      mathfield.setAttribute('aria-label','Your next step, visual mathematics editor');
+      mathfield.setAttribute('math-virtual-keyboard-policy','auto');
+      mathfield.smartFence=true;
+      mathWrapper.appendChild(mathfield);
+      text(mathWrapper,'p','Enter a fraction, power, root or derivative using your keyboard or the buttons below. Text entry remains available.','note');
+      var keys=document.createElement('div');keys.className='math-keys';
+      mathWrapper.appendChild(keys);
+      [
+        ['Fraction','\\frac{#?}{#?}'],
+        ['Power','^{#?}'],
+        ['Square root','\\sqrt{#?}'],
+        ['Sine','\\sin\\left(#?\\right)'],
+        ['Cosine','\\cos\\left(#?\\right)'],
+        ['d/dx','\\frac{\\mathrm{d}}{\\mathrm{d}x}\\left(#?\\right)']
+      ].forEach(function (key) {
+        var item=appendButton(keys,key[0],function(){
+          mathfield.focus();
+          mathfield.insert(key[1],{selectionMode:'placeholder'});
+        },'secondary');
+        item.setAttribute('aria-label','Insert '+key[0]+' in visual equation');
+      });
+    }else{
+      mathWrapper.hidden=true;
+      text(entry,'p','Visual math editing is unavailable. You can still type calculator syntax or LaTeX.','note');
+    }
+    var textWrapper = document.createElement('div');
+    textWrapper.className='text-entry';entry.appendChild(textWrapper);
+    var attempt = document.createElement('textarea');
+    attempt.id = 'student-next-step';attempt.rows=2;
+    attempt.autocapitalize='off';attempt.autocomplete='off';attempt.spellcheck=false;
+    attempt.placeholder='e.g. 4*(x^2+3)^3*2*x';
+    textWrapper.appendChild(attempt);
+    var lastNotation=attemptFormat.value;
+    function syncStepNotation() {
+      var usingVisual=attemptFormat.value==='visual' && !!mathfield;
+      mathWrapper.hidden=!usingVisual;
+      textWrapper.hidden=usingVisual;
+      inputLabel.htmlFor=usingVisual?'student-mathfield':'student-next-step';
+    }
+    function currentStudentInput() {
+      return attemptFormat.value==='visual'&&mathfield ? mathfield.value : attempt.value;
+    }
+    syncStepNotation();
     var graded = text(entry,'p','','note'); graded.id = 'student-feedback';
     graded.setAttribute('role','status'); graded.setAttribute('aria-live','polite');
     var recognizedParts = document.createElement('section'); recognizedParts.className='feedback-parts';
@@ -247,14 +302,15 @@
       hintButton.disabled = hintPosition >= currentHints.length;
     }
     appendButton(entry, 'Check my step', function () {
-      if (!attempt.value.trim()) { graded.textContent='Enter an expression to check.';return; }
+      var typed=currentStudentInput();
+      if (!typed.trim()) { graded.textContent='Enter an expression to check.';return; }
       if (requestId !== runId) return;
       try {
         var latex = attemptFormat.value === 'cas'
-          ? window.MathDreamweaverSteps.calculatorToLatex(attempt.value)
-          : attempt.value;
+          ? window.MathDreamweaverSteps.calculatorToLatex(typed)
+          : typed;
         var checked = window.MathDreamweaverSteps.checkStudentStep(trace,index,latex,
-          attemptFormat.value === 'cas' ? {calculatorSource:attempt.value} : {});
+          attemptFormat.value === 'cas' ? {calculatorSource:typed} : {});
         var reminder = trace.domainNotes && trace.domainNotes.length &&
           ['matched','equivalent','skipped'].includes(checked.status)
           ? ' Keep the original domain restrictions shown above.' : '';
@@ -279,16 +335,28 @@
       }
     });
     var hintButton = appendButton(entry, 'Show next hint', showNextHint, 'secondary');
-    attempt.addEventListener('input', function () {
-      // A changed answer must not inherit a diagnosis from an older attempt.
-      graded.textContent=''; graded.dataset.status=''; graded.dataset.mistake='';
-      graded.className='note'; recognizedParts.hidden=true;
+    function clearStudentAttemptFeedback() {
+      graded.textContent='';graded.dataset.status='';graded.dataset.mistake='';
+      graded.className='note';recognizedParts.hidden=true;
       resetHints(window.MathDreamweaverSteps.getProgressiveHints(trace,index));
-    });
-    attemptFormat.addEventListener('change', function () {
-      graded.textContent=''; graded.dataset.status=''; graded.dataset.mistake='';
-      graded.className='note';
-      resetHints(window.MathDreamweaverSteps.getProgressiveHints(trace,index));
+    }
+    attempt.addEventListener('input',clearStudentAttemptFeedback);
+    if(mathfield)mathfield.addEventListener('input',clearStudentAttemptFeedback);
+    attemptFormat.addEventListener('change',function () {
+      if(mathfield && attemptFormat.value==='visual' && lastNotation!=='visual' && attempt.value.trim()) {
+        try {
+          mathfield.value=lastNotation==='cas'
+            ? window.MathDreamweaverSteps.calculatorToLatex(attempt.value)
+            : attempt.value;
+        }catch{/* Keep the typed original accessible for correction. */}
+      }else if(mathfield && lastNotation==='visual' && attemptFormat.value==='latex'){
+        attempt.value=mathfield.value;
+      }else if(lastNotation==='visual' && attemptFormat.value==='cas'){
+        attempt.value=''; // LaTeX must not be treated as calculator syntax.
+      }
+      lastNotation=attemptFormat.value;
+      syncStepNotation();
+      clearStudentAttemptFeedback();
     });
 
     var allBox = document.createElement('div'); allBox.className = 'all-steps'; allBox.hidden = true;
@@ -349,7 +417,9 @@
         index === steps.length - 1 ? 'Reveal final answer' : 'Next step';
       practice.hidden = index === steps.length - 1;
       choice.value = ''; feedback.textContent = '';
-      attempt.value = ''; graded.textContent = ''; graded.dataset.status = '';
+      attempt.value = '';
+      if(mathfield)mathfield.value='';
+      graded.textContent = ''; graded.dataset.status = '';
       studentProgress.textContent = ''; studentProgress.dataset.status = '';
       recognizedParts.hidden = true;
       resetHints(window.MathDreamweaverSteps.getProgressiveHints(trace,index));

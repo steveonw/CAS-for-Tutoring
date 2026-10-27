@@ -1,9 +1,9 @@
 {
   "name": "math-dreamweaver-javascript-cas",
-  "version": "0.6.0-alpha.1",
+  "version": "0.6.0-alpha.2",
   "private": true,
   "license": "MIT",
-  "description": "Offline Calculus I tutor with component-aware derivative feedback, three hint levels, and conservative domain checks",
+  "description": "Offline Calculus I tutor with visual MathLive input, component-aware hints and domain checks",
   "scripts": {
     "test": "node --test test/*.test.cjs test/*.test.mjs",
     "build:offline": "node scripts/build-offline.cjs",
@@ -19,7 +19,8 @@
   "dependencies": {
     "nerdamer": "2.0.0",
     "mathjax": "3.2.2",
-    "@cortex-js/compute-engine": "0.159.0"
+    "@cortex-js/compute-engine": "0.159.0",
+    "mathlive": "0.111.1"
   },
   "devDependencies": {
     "esbuild": "0.25.12",

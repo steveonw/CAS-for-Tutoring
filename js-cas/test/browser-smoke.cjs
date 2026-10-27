@@ -25,7 +25,18 @@ async function main(){
     assert.match(await page.locator('.walkthrough h2').innerText(),/Step-by-step breakdown/);
     assert.equal(await page.locator('.answer-area').isVisible(),false);
     assert.equal(await page.locator('#student-next-step').count(),1);
+    assert.equal(await page.locator('#student-step-format').inputValue(),'visual');
+    assert.equal(await page.locator('#student-mathfield').isVisible(),true);
     assert.equal(await page.locator('.step-card .math').nth(1).isVisible(),false,'next line must not be revealed');
+    assert.equal(await page.evaluate(()=>typeof window.MathfieldElement),'function');
+    const bundleFonts=await page.evaluate(async()=>{
+      await document.fonts.ready;
+      return [...document.fonts].length;
+    });
+    assert.ok(bundleFonts>=5,'Local MathLive font faces must be registered in the browser');
+    // Toolbar inserts real MathLive atoms, not hand-built HTML.
+    await page.getByRole('button',{name:'Insert Fraction in visual equation'}).click();
+    assert.match(await page.locator('#student-mathfield').evaluate(el=>el.value),/frac/);
 
     // Step 0 is where students choose the FIRST rule.
     await page.locator('#next-rule').selectOption('sum');
@@ -101,6 +112,7 @@ async function main(){
     // generic suggestion about all chain-rule problems.
     await page.locator('#expression').fill('sin(x^2)');
     await page.getByRole('button',{name:'Start guided practice'}).click();
+    await page.locator('#student-step-format').selectOption('cas');
     await page.locator('#student-next-step').fill('cos(x^2)');
     await page.getByRole('button',{name:'Check my step'}).click();
     assert.equal(await page.locator('#student-feedback').getAttribute('data-status'),'mistake');
@@ -162,6 +174,44 @@ async function main(){
     assert.match(await page.locator('.student-progress').innerText(),/Correct derivative/);
     assert.equal(await page.locator('.answer-area').isVisible(),true);
 
+    // Visual MathLive input uses exactly the same safe derivative checker.
+    await page.locator('#expression').fill('(3*x^2+1)^5');
+    await page.getByRole('button',{name:'Start guided practice'}).click();
+    assert.equal(await page.locator('#student-step-format').inputValue(),'visual');
+    assert.equal(await page.locator('#student-mathfield').isVisible(),true);
+
+    // A physical keyboard works without the on-screen math keyboard.
+    await page.locator('#student-mathfield').focus();
+    await page.keyboard.type('x^2');
+    assert.match(await page.locator('#student-mathfield').evaluate(el=>el.value),/x/);
+    await page.locator('#student-mathfield').evaluate(el=>{
+      el.value='5(3x^2+1)^4\\frac{\\mathrm{d}}{\\mathrm{d}x}\\left(3x^2+1\\right)';
+      el.dispatchEvent(new Event('input',{bubbles:true}));
+    });
+    await page.getByRole('button',{name:'Check my step'}).click();
+    assert.match(await page.locator('.step-card h3').innerText(),/Step 1 of/);
+    assert.equal(await page.locator('.answer-area').isVisible(),false);
+    await page.getByRole('button',{name:'Start guided practice'}).click();
+    await page.locator('#student-mathfield').evaluate(el=>{
+      el.value='5(3x^2+1)^4\\cdot 6x';
+      el.dispatchEvent(new Event('input',{bubbles:true}));
+    });
+    await page.getByRole('button',{name:'Check my step'}).click();
+    assert.match(await page.locator('.student-progress').innerText(),/Correct derivative/);
+    assert.equal(await page.locator('.answer-area').isVisible(),true);
+
+    // Text alternatives remain keyboard-accessible and still pass the
+    // calculator's source-domain guard on unsimplified raw arithmetic.
+    await page.locator('#expression').fill('x^2');
+    await page.getByRole('button',{name:'Start guided practice'}).click();
+    await page.locator('#student-step-format').selectOption('cas');
+    assert.equal(await page.locator('#student-next-step').isVisible(),true);
+    assert.equal(await page.locator('#student-mathfield').isVisible(),false);
+    await page.locator('#student-next-step').fill('2*x^2/x');
+    await page.getByRole('button',{name:'Check my step'}).click();
+    assert.equal(await page.locator('#student-feedback').getAttribute('data-status'),'domain-mismatch');
+    await page.screenshot({path:path.join(reports,'mathlive-visual-editor.png'),fullPage:true});
+
     // Calculator Mode shows the answer immediately, without tutor questions.
     await page.locator('#study-mode').selectOption('calculator');
     assert.equal(await page.locator('.walkthrough').count(),0);
@@ -192,6 +242,17 @@ async function main(){
       {waitUntil:'load',timeout:30000});
     await single.locator('.step-card h3').waitFor({timeout:30000});
     assert.match(await single.locator('.step-card h3').innerText(),/Step 0/);
+    assert.equal(await single.locator('#student-step-format').inputValue(),'visual');
+    assert.equal(await single.locator('#student-mathfield').isVisible(),true);
+    assert.equal(await single.evaluate(()=>document.querySelector('#embedded-mathlive-fonts')!==null),true);
+    assert.ok((await single.evaluate(()=>[...document.styleSheets].some(s=>s.ownerNode?.id==='embedded-mathlive-fonts'))));
+    await single.locator('#student-mathfield').evaluate(el=>{
+      el.value='4(x^2+3)^3\\cdot 2x';
+      el.dispatchEvent(new Event('input',{bubbles:true}));
+    });
+    await single.getByRole('button',{name:'Check my step'}).click();
+    assert.match(await single.locator('.student-progress').innerText(),/Correct derivative/);
+    await single.getByRole('button',{name:'Start guided practice'}).click();
     await single.locator('.step-card .math mjx-container').first().waitFor({timeout:30000});
     assert.equal(await single.getByRole('button',{name:/Show next hint/}).count(),1);
     await single.getByRole('button',{name:/Show next hint/}).click();
@@ -204,7 +265,7 @@ async function main(){
     await single.screenshot({path:path.join(reports,'single-file-step-zero.png'),fullPage:true});
     assert.deepEqual(remoteRequests,[],'An offline package attempted network requests');
     assert.deepEqual(pageErrors,[],'Uncaught browser JavaScript errors');
-    console.log('PASS: Tutor Step 0, typed steps, rule quiz, quick mode, offline folder and standalone HTML.');
+    console.log('PASS: Tutor Mode, MathLive visual entry, safe text alternatives, keyboard, fonts, offline folder and standalone HTML.');
   } finally {
     await browser.close();
   }

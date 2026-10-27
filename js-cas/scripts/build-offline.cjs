@@ -38,6 +38,19 @@ copyLicense('nerdamer', 'NERDAMER-LICENSE.txt');
 copyLicense('mathjax', 'MATHJAX-LICENSE.txt');
 copyLicense('@cortex-js/compute-engine', 'CORTEXJS-LICENSE.txt');
 
+// Build exclusively from PINNED npm assets; no CDN or runtime internet.
+const mlDir=path.join(root,'node_modules','mathlive');
+const fonts=requireFile(path.join(mlDir,'fonts'),'MathLive font folder');
+const fontFiles=fs.readdirSync(fonts).filter(name=>/\.(?:woff2?|otf|ttf)$/i.test(name));
+if(fontFiles.length<5)throw Error('MathLive font assets are missing.');
+fs.cpSync(fonts,path.join(vendor,'fonts'),{recursive:true,force:true});
+fs.copyFileSync(requireFile(path.join(mlDir,'mathlive.min.js'),'MathLive browser script'),
+  path.join(vendor,'mathlive.min.js'));
+fs.copyFileSync(requireFile(path.join(mlDir,'mathlive-fonts.css'),'MathLive font stylesheet'),
+  path.join(vendor,'mathlive-fonts.css'));
+copyLicense('mathlive','MATHLIVE-LICENSE.txt');
+console.log('Bundled MathLive 0.111.1 with '+fontFiles.length+' font assets.');
+
 // Pin the rule-tracing engine and bundle it for offline use, including file://.
 esbuild.buildSync({
   entryPoints: [path.join(root, 'lib', 'step-engine.mjs')],
