@@ -201,7 +201,8 @@
         var latex = attemptFormat.value === 'cas'
           ? window.MathDreamweaverCAS.inputToLatex(attempt.value, 'cas')
           : attempt.value;
-        var checked = window.MathDreamweaverSteps.checkStudentStep(trace,index,latex);
+        var checked = window.MathDreamweaverSteps.checkStudentStep(trace,index,latex,
+          attemptFormat.value === 'cas' ? {calculatorSource:attempt.value} : {});
         var reminder = trace.domainNotes && trace.domainNotes.length &&
           ['matched','equivalent','skipped'].includes(checked.status)
           ? ' Keep the original domain restrictions shown above.' : '';
@@ -325,7 +326,8 @@
     if (result.operation === 'differentiate' && result.latexExpression && window.MathDreamweaverSteps) {
       try {
         var trace = window.MathDreamweaverSteps.explainDerivative(result.latexExpression, {
-          checkLatex: result.latexAnswer
+          checkLatex: result.latexAnswer,
+          sourceExpression: result.expression
         });
         if (trace.verification && trace.verification.status === 'conflict') {
           text(output, 'p', 'Mathematical disagreement detected between the two symbolic engines. The walkthrough and final answer are withheld to avoid teaching a potentially incorrect result.', 'math-error');

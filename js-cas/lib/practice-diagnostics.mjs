@@ -5,7 +5,7 @@
  * Never invent intermediate transformations.
  */
 import {ComputeEngine} from '@cortex-js/compute-engine';
-import {describeDerivativeDomain} from './domain-guard.mjs';
+import {describeDerivativeDomain,describeCalculatorDomain} from './domain-guard.mjs';
 const ce=new ComputeEngine();
 const PROBES=[0.2,0.45,0.85,1,1.5,2,3,-0.5,-1.5,-2];
 function parsed(tex){return ce.parse(tex);}
@@ -92,7 +92,9 @@ export function diagnoseCommonMistake(trace,studentLatex){
   try{
     student=parsed(studentLatex);actual=parsed(trace.resultLatex);
     ast=ce.parse(trace.originalLatex,{canonical:false}).json;
-    domain=describeDerivativeDomain(trace.originalLatex,{derivative:true});
+    domain=trace.sourceExpression
+      ? describeCalculatorDomain(trace.sourceExpression,{derivative:true})
+      : describeDerivativeDomain(trace.originalLatex,{derivative:true});
   }catch{return null;}
   // Product rule: if the derivative has a sum of two or more contributions,
   // a single summand is a verifiable omitted-term pattern.

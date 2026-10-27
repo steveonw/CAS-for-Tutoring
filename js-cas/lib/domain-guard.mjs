@@ -170,12 +170,14 @@ function restrictionsFor(ast,{derivative=false}={}) {
       case 'Divide':
         add('nonzero',node[2],'Denominator '+label(node[2])+' must be nonzero.');
         break;
-      case 'Power':
-        if(typeof node[2]==='number' && node[2]<0)
+      case 'Power':{
+        const exponent0=numeric(node[2],0),exponent1=numeric(node[2],1);
+        if(finite(exponent0)&&exponent0===exponent1&&exponent0<0)
           add('nonzero',arg,'Negative power requires '+label(arg)+' to be nonzero.');
         else if(node[2]==='x')
           add('positive',arg,'For this real logarithmic-differentiation method, base '+label(arg)+' must be positive.',true);
         break;
+      }
       case 'Ln':
         add('positive',arg,'The natural-log argument '+label(arg)+' must be positive.');
         break;
