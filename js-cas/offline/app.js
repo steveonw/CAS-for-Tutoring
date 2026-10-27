@@ -106,24 +106,24 @@
     var lesson = document.createElement('section'); lesson.className = 'walkthrough';
     parent.appendChild(lesson);
     text(lesson, 'h2', 'Step-by-step breakdown (' + steps.length + ' recorded steps)');
-    text(lesson, 'p', 'Start by choosing a rule and trying the next expression. The mathematical transformations are recorded by CortexJS explain(D), not invented after the result.', 'note');
+    text(lesson, 'p', 'Choose a rule, try the next line, or solve ahead. Correct shortcuts earn credit; you can always review individual steps.', 'note');
     var verification = trace.verification || {};
     var cross = verification.status === 'symbolic'
-      ? 'CortexJS and Nerdamer agree by the symbolic equivalence check.'
+      ? 'The two symbolic engines agree under their assumptions.'
       : verification.status === 'samples-consistent'
-        ? 'Values match at ' + verification.samplesChecked + ' sampled points. This is NOT proof of equivalence: domain assumptions still matter.'
-        : 'Symbolic agreement has not been established. Check advanced problems independently.';
-    text(lesson, 'p', cross, 'note');
-    text(lesson,'p','Practice checks may confirm recorded structure or engine equivalence and identify specific mistakes. Known domain conditions are reviewed below, but this is NOT a complete proof of the real domain.','note');
-    var domainBox = document.createElement('section'); domainBox.className = 'domain-notes';
-    lesson.appendChild(domainBox);
-    text(domainBox,'h3','Domain and differentiability checks (partial)');
-    if (trace.domainNotes && trace.domainNotes.length) {
+        ? 'The engines match at ' + verification.samplesChecked + ' sampled points, but this is not proof of identity.'
+        : 'Symbolic agreement has not been established for all cases.';
+    var about = document.createElement('details'); about.className = 'about-checks'; lesson.appendChild(about);
+    text(about, 'summary', 'About these checks and their limitations');
+    text(about, 'p', cross + ' The walkthrough uses actual recorded CortexJS transformations.', 'note');
+    text(about, 'p', 'Student work is checked using symbolic comparisons and counterexamples. Some domain restrictions are detected, but the checker cannot prove every identity or verify every domain. When uncertain it says unverified.', 'note');
+    if (trace.domainNotes && trace.domainNotes.length &&
+      !/^The real domain could not/.test(trace.domainNotes[0])) {
+      var domainBox = document.createElement('section'); domainBox.className = 'domain-notes';
+      lesson.appendChild(domainBox);
+      text(domainBox,'h3','Domain and differentiability notes');
       var domainList = document.createElement('ul'); domainBox.appendChild(domainList);
       trace.domainNotes.forEach(function (note) { text(domainList,'li',note); });
-      text(domainBox,'p','Even if a derivative simplifies, exclusions from the original expression still apply. Boundary points may need separate analysis.','note');
-    } else {
-      text(domainBox,'p','No restriction was identified by the limited scanner. This does NOT establish an all-real domain.','note');
     }
 
     var card = document.createElement('div'); card.className = 'step-card'; lesson.appendChild(card);
@@ -146,6 +146,9 @@
     });
     appendButton(nav, 'Why this rule?', function () { more.hidden = !more.hidden; }, 'secondary');
 
+    var studentProgress = text(lesson, 'p', '', 'note');
+    studentProgress.classList.add('student-progress');
+    studentProgress.setAttribute('role','status');
     var practice = document.createElement('div'); practice.className = 'practice'; lesson.appendChild(practice);
     text(practice, 'h3', 'Predict the next rule');
     text(practice, 'p', 'Choose which rule should be applied BEFORE revealing the next equation.', 'note');
@@ -163,10 +166,9 @@
     var practiceActions = document.createElement('div'); practice.appendChild(practiceActions);
     appendButton(practiceActions, 'Check my choice', function () {
       if (!choice.value) { feedback.textContent = 'Choose a rule first.'; return; }
-      var correct = window.MathDreamweaverSteps.checkNextRule(trace, index, choice.value);
-      feedback.textContent = correct
-        ? 'Correct! That is the next recorded rule. Reveal the step when you are ready.'
-        : 'Not quite. Think about the expression, or ask for a hint.';
+      var assessed = window.MathDreamweaverSteps.assessNextRule(trace, index, choice.value);
+      feedback.textContent = assessed.message;
+      feedback.dataset.status = assessed.correct ? 'correct' : 'retry';
     });
     appendButton(practiceActions, 'Hint', function () {
       feedback.textContent = steps[index + 1].hint;
@@ -175,7 +177,7 @@
     var entry = document.createElement('div'); entry.className = 'step-entry';
     practice.appendChild(entry);
     text(entry,'h3','Write the next mathematical line');
-    text(entry,'p','Enter an intermediate expression in calculator syntax, or choose LaTeX. A correct final answer that skips several recorded steps will be identified as a skip, not the requested next transformation.','note');
+    text(entry,'p','Write the next step or solve ahead in calculator syntax or LaTeX. A correct shortcut counts; you can return to review the recorded intermediate work.','note');
     var inputLabel = text(entry, 'label', 'Your next step');
     inputLabel.htmlFor = 'student-next-step';
     var attempt = document.createElement('textarea');
@@ -199,18 +201,26 @@
       if (requestId !== runId) return;
       try {
         var latex = attemptFormat.value === 'cas'
-          ? window.MathDreamweaverCAS.inputToLatex(attempt.value, 'cas')
+          ? window.MathDreamweaverSteps.calculatorToLatex(attempt.value)
           : attempt.value;
         var checked = window.MathDreamweaverSteps.checkStudentStep(trace,index,latex,
           attemptFormat.value === 'cas' ? {calculatorSource:attempt.value} : {});
         var reminder = trace.domainNotes && trace.domainNotes.length &&
           ['matched','equivalent','skipped'].includes(checked.status)
           ? ' Keep the original domain restrictions shown above.' : '';
-        graded.textContent = checked.message + reminder;
-        graded.dataset.status = checked.status;
-        graded.dataset.mistake = checked.code || '';
-        graded.className = ['counterexample','domain-mismatch','mistake','invalid'].includes(checked.status)
-          ? 'math-error' : 'note';
+        if (Number.isInteger(checked.advanceTo) && checked.advanceTo > index) {
+          index = checked.advanceTo;
+          draw();
+          studentProgress.textContent = checked.message + reminder;
+          studentProgress.dataset.status = checked.status;
+          if (checked.final) revealAnswer();
+        } else {
+          graded.textContent = checked.message + reminder;
+          graded.dataset.status = checked.status;
+          graded.dataset.mistake = checked.code || '';
+          graded.className = ['counterexample','domain-mismatch','mistake','invalid'].includes(checked.status)
+            ? 'math-error' : 'note';
+        }
       } catch (error) {
         graded.textContent = 'Cannot check this line: ' + (error.message || String(error));
         graded.dataset.status = 'invalid'; graded.className = 'math-error';
@@ -280,6 +290,7 @@
       practice.hidden = index === steps.length - 1;
       choice.value = ''; feedback.textContent = '';
       attempt.value = ''; graded.textContent = ''; graded.dataset.status = '';
+      studentProgress.textContent = ''; studentProgress.dataset.status = '';
     }
     draw();
   }

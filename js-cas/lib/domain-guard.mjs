@@ -149,6 +149,43 @@ export function parseCalculatorRaw(source) {
   if(index!==tokens.length)throw new Error('Unsupported or trailing calculator symbols.');
   return result;
 }
+// Render the *validated* calculator tree without asking Nerdamer to
+// simplify it. This preserves the entered grouping and explicit terms for
+// a student-facing next-step check. The grading engine may separately
+// canonicalize expressions for mathematical comparison.
+export function calculatorToLatex(source) {
+  const ast=parseCalculatorRaw(source);
+  function render(node) {
+    if(typeof node==='number')return String(node);
+    if(node==='x')return 'x';
+    if(node==='Pi')return '\\pi';
+    if(node==='ExponentialE')return '\\exponentialE';
+    if(!Array.isArray(node))throw new Error('Unsupported calculator symbol.');
+    const a=node[1], b=node[2], x=()=>render(a), y=()=>render(b);
+    const group=value=>'\\left('+value+'\\right)';
+    switch(node[0]){
+      case 'Add':return group(x()+'+'+y());
+      case 'Subtract':return group(x()+'-'+y());
+      case 'Negate':return '-'+group(x());
+      case 'Multiply':return group(x())+'\\cdot'+group(y());
+      case 'Divide':return '\\frac{'+x()+'}{'+y()+'}';
+      case 'Power':return group(x())+'^{'+y()+'}';
+      case 'Sin':case 'Cos':case 'Tan':case 'Sec':case 'Csc':
+      case 'Cot':case 'Arcsin':case 'Arccos':case 'Arctan':
+      case 'Ln':case 'Sqrt':case 'Exp': {
+        const names={Sin:'sin',Cos:'cos',Tan:'tan',Sec:'sec',Csc:'csc',
+          Cot:'cot',Arcsin:'arcsin',Arccos:'arccos',Arctan:'arctan',
+          Ln:'ln',Sqrt:'sqrt',Exp:'exp'};
+        return '\\'+names[node[0]]+group(x());
+      }
+      case 'Abs':return '\\left|'+x()+'\\right|';
+      default:throw new Error('Unsupported calculator function.');
+    }
+  }
+  const latex=render(ast);
+  if(latex.length>360)throw new Error('This line is too long for the practice checker.');
+  return latex;
+}
 function restrictionsFor(ast,{derivative=false}={}) {
   const conditions=[],seen=new Set();
   let complete=true;

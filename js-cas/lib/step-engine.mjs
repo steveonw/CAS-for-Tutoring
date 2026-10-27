@@ -3,7 +3,7 @@
  * be justified by the before/after expression AST, never guessed from text.
  */
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import {describeDerivativeDomain,describeCalculatorDomain,extraStudentDomainHole,originalDomainNotes} from './domain-guard.mjs';
+import {describeDerivativeDomain,describeCalculatorDomain,extraStudentDomainHole,originalDomainNotes,parseCalculatorRaw,calculatorToLatex} from './domain-guard.mjs';
 import {diagnoseCommonMistake} from './practice-diagnostics.mjs';
 const engine = new ComputeEngine();
 const RULES = Object.freeze({
@@ -187,10 +187,55 @@ export function explainDerivative(latex, options={}) {
     provenance:'CortexJS Compute Engine explain(D) — recorded symbolic transformations'
   };
 }
-export function checkNextRule(trace,viewedIndex,selectedFamily){
-  if(!trace || !Array.isArray(trace.steps))return false;
+function variableOccurs(node) {
+  if(node==='x')return true;
+  return Array.isArray(node) && node.slice(1).some(variableOccurs);
+}
+function compositeOutside(node) {
+  if(!Array.isArray(node))return false;
+  const type=node[0],base=node[1],exponent=node[2];
+  if(type==='Power'){
+    // (f(x))^n and a^(g(x)) are composite when the inner expression is
+    // not just x. A plain x^5 does not earn a separate chain choice.
+    return (variableOccurs(base) && base!=='x') ||
+      (!variableOccurs(base) && variableOccurs(exponent) && exponent!=='x');
+  }
+  if(['Sin','Cos','Tan','Sec','Csc','Cot','Ln','Sqrt','Exp',
+    'Arcsin','Arccos','Arctan'].includes(type)) {
+    return variableOccurs(base) && base!=='x';
+  }
+  return false;
+}
+export function assessNextRule(trace,viewedIndex,selectedFamily) {
+  if(!trace || !Array.isArray(trace.steps) || !Number.isInteger(viewedIndex))
+    return {correct:false,message:'No recorded rule to check.'};
   const next=trace.steps[viewedIndex+1];
-  return !!next && next.family===selectedFamily;
+  if(!next)return {correct:false,message:'The recorded steps are complete.'};
+  if(selectedFamily===next.family)return {
+    correct:true,alternative:false,
+    message:'Correct — the next recorded rule is '+next.rule+'.'
+  };
+  // The engine chooses one legal decomposition; Calc I students can
+  // correctly call a composite power or exponential a chain-rule problem.
+  if(viewedIndex===-1 && selectedFamily==='chain') {
+    let ast;
+    try {ast=trace.sourceExpression
+      ? parseCalculatorRaw(trace.sourceExpression)
+      : engine.parse(trace.originalLatex,{canonical:false}).json;}catch{return {
+      correct:false,message:'Not this recorded rule. Try a hint.'
+    };}
+    if(compositeOutside(ast) && ['power','exponential','known','chain'].includes(next.family)){
+      return {
+        correct:true,alternative:true,
+        message:'Correct — this is a chain-rule composition. The engine records '+
+          next.rule+' first, then differentiates the inside. Both descriptions are valid.'
+      };
+    }
+  }
+  return {correct:false,message:'Not quite. Think about the outside structure, or ask for a hint.'};
+}
+export function checkNextRule(trace,viewedIndex,selectedFamily){
+  return assessNextRule(trace,viewedIndex,selectedFamily).correct;
 }
 // Interactive student practice is intentionally conservative. Exact parsed
 // matches are accepted as the expected recorded step. Verified symbolic
@@ -238,59 +283,111 @@ function sampledCounterexample(a,b,originalLatex,sourceExpression) {
   }
   return null;
 }
+// A student is free to take a valid shortcut; the engine's intermediate
+// unevaluated d/dx states are TEACHING aids, not mandatory answer syntax.
+// Accept an actually recorded later state or final derivative, without
+// claiming that symbolic equality proves domain or the student's method.
+function sameKnownMath(proposed,expected,trace) {
+  try{
+    if(structuralMatch(proposed,expected))return true;
+    const proved=proposed.isEqual(expected)===true ||
+      JSON.stringify(proposed.simplify().json)===JSON.stringify(expected.simplify().json);
+    if(!proved)return false;
+    return !sampledCounterexample(proposed,expected,
+      trace.originalLatex,trace.sourceExpression);
+  }catch{return false;}
+}
+function advancedResult(trace,viewedIndex,targetIndex,isExact) {
+  const jump=targetIndex-viewedIndex;
+  const final=targetIndex===trace.steps.length-1;
+  const unproved=isExact ? '' :
+    ' Symbolic equivalence is supported by the engine, but domain and method restrictions still matter.';
+  return {
+    status:jump===1?(isExact?'matched':'equivalent'):'advanced',
+    advanceTo:targetIndex,skippedCount:Math.max(0,jump-1),
+    final,
+    message:final && jump>1
+      ? 'Correct derivative — you completed '+jump+' recorded steps at once. You can review the intermediate rules if useful.'+unproved
+      :jump>1
+        ? 'Correct — your expression reaches recorded step '+(targetIndex+1)+
+          ', advancing '+jump+' steps. You can review the skipped explanations.'+unproved
+        :(isExact?'Correct — your line matches the next recorded transformation.':
+          'Correct — your line is equivalent to the next recorded state under the engine assumptions.')+unproved
+  };
+}
 export function checkStudentStep(trace, viewedIndex, latex, options={}) {
   if(!trace || !Array.isArray(trace.steps) || !Number.isInteger(viewedIndex) ||
     viewedIndex < -1 || viewedIndex>=trace.steps.length)
     return {status:'invalid',message:'No active recorded step to check.'};
-  const next=trace.steps[viewedIndex+1];
-  if(!next) return {status:'complete',message:'You reached the end of the recorded steps.'};
-  // CortexJS may emit TeX macros beyond the public student-input subset.
-  // Its OWN recorded string is authoritative for exact next-line checking:
-  // compare this trusted trace text first rather than rejecting it as input.
-  // Do not run arbitrary student TeX that merely resembles the trace.
-  if(typeof latex==='string' && latex.trim()===next.latex)
-    return {status:'matched',message:'Your line matches the next recorded transformation. You can reveal it to check the rule.'};
-  let proposed,required,final;
-  try{
+  const steps=trace.steps, next=steps[viewedIndex+1];
+  if(!next)return {status:'complete',message:'You reached the end of the recorded steps.'};
+  if(trace.verification?.status==='conflict')
+    return {status:'unverified',message:'The symbolic engines disagree; this answer cannot be graded safely.'};
+  if(typeof latex!=='string' || !latex.trim())
+    return {status:'invalid',message:'Enter a mathematical expression first.'};
+
+  // Only source-generated TeX gets the exact-matching exception for macros
+  // not allowed in free-form student input, e.g. an unevaluated d/dx.
+  const sourceMatch=steps.findIndex((step,i)=>i>viewedIndex && step.latex===latex.trim());
+  if(sourceMatch>=0){
+    const hole=extraStudentDomainHole(trace.originalLatex,steps[sourceMatch].latex,latex,{
+      originalSource:trace.sourceExpression,studentSource:options.calculatorSource
+    });
+    if(hole)return {status:'domain-mismatch',x:hole.x,message:hole.message};
+    return advancedResult(trace,viewedIndex,sourceMatch,true);
+  }
+  let proposed;
+  try {
     proposed=parsedOrError(validateStudentLatex(latex));
-    required=parsedOrError(next.latex);
-    final=parsedOrError(trace.resultLatex);
-  }catch(error){
-    return {status:'invalid',message:error.message};
+  }catch(error){return {status:'invalid',message:error.message};}
+
+  // Favor mathematically justified later states and the complete answer;
+  // the machine trace may contain unevaluated D() expressions that a
+  // student cannot reasonably enter using calculator notation.
+  for(let i=viewedIndex+1;i<steps.length;i++){
+    let candidate;
+    try{candidate=parsedOrError(steps[i].latex);}catch{continue;}
+    if(!sameKnownMath(proposed,candidate,trace))continue;
+    const hole=extraStudentDomainHole(trace.originalLatex,steps[i].latex,latex,{
+      originalSource:trace.sourceExpression,studentSource:options.calculatorSource
+    });
+    if(hole)return {status:'domain-mismatch',x:hole.x,message:hole.message};
+    return advancedResult(trace,viewedIndex,i,structuralMatch(proposed,candidate));
   }
-  // Checking exact next-line structure first means we do not mistake an
-  // algebraically equivalent final answer for the requested intermediate rule.
-  // Inspect the source structures before canonical simplification can
-  // erase a hole such as x/x at x=0. An unsupported domain is not "proved".
-  const domainHole=extraStudentDomainHole(trace.originalLatex,next.latex,latex,{
-    originalSource:trace.sourceExpression,
-    studentSource:options.calculatorSource
-  });
-  if(domainHole)return {status:'domain-mismatch',x:domainHole.x,message:domainHole.message};
-  if(structuralMatch(proposed,required)) {
-    return {status:'matched',message:'Your line matches the next recorded transformation. You can reveal it to check the rule.'};
-  }
-  if(viewedIndex+1<trace.steps.length-1 &&
-    (structuralMatch(proposed,final) || proposed.isEqual(final)===true)) {
-    return {status:'skipped',message:'Your expression reaches the final derivative, but this exercise is asking for the next intermediate step. Try showing the rule you would use first.'};
-  }
-  // Misconception feedback requires a concrete match to a known wrong
-  // transformation AND a counterexample against the full correct derivative.
+  // The final CAS derivative is also a mathematically valid shortcut,
+  // regardless of how many unevaluated engine stages it bypasses.
+  try {
+    const final=parsedOrError(trace.resultLatex);
+    if(sameKnownMath(proposed,final,trace)){
+      const hole=extraStudentDomainHole(trace.originalLatex,trace.resultLatex,latex,{
+        originalSource:trace.sourceExpression,studentSource:options.calculatorSource
+      });
+      if(hole)return {status:'domain-mismatch',x:hole.x,message:hole.message};
+      return advancedResult(trace,viewedIndex,steps.length-1,
+        structuralMatch(proposed,final));
+    }
+  }catch{/* Unsupported: report uncertainty instead of inventing success. */}
+
+  // If no correct later state matched, check known mistake patterns with
+  // an actual counterexample, then the immediate expected step.
   const mistake=diagnoseCommonMistake(trace,latex);
   if(mistake)return mistake;
-  const equivalent=proposed.isEqual(required);
-  if(equivalent===true){
-    return {status:'equivalent',message:'The engine finds your expression symbolically equivalent to the next line. It may use a different order of rules; this does not verify domains or the exact method.'};
-  }
+  let required;
+  try{required=parsedOrError(next.latex);}
+  catch{return {status:'unverified',message:'The intermediate rule requires notation this checker cannot interpret. Ask for a hint or reveal it.'};}
+  const hole=extraStudentDomainHole(trace.originalLatex,next.latex,latex,{
+    originalSource:trace.sourceExpression,studentSource:options.calculatorSource
+  });
+  if(hole)return {status:'domain-mismatch',x:hole.x,message:hole.message};
   const example=sampledCounterexample(proposed,required,trace.originalLatex,trace.sourceExpression);
-  if(example){
-    return {status:'counterexample',x:example.x,message:'These expressions give different values at x = '+example.x+'. Review the '+next.rule+' transformation and check each term.'};
-  }
-  return {status:'unverified',message:'I could not verify this as the next transformation. It may need a different form, or the engine may be unable to prove it. Try a hint or reveal the step.'};
+  if(example)return {status:'counterexample',x:example.x,
+    message:'The expressions differ at x = '+example.x+'. Review the '+next.rule+' and check each term.'};
+  return {status:'unverified',message:'I could not verify this line against the recorded rule or the final derivative. That does not mean your reasoning is necessarily wrong; try a hint or reveal the step.'};
 }
+export {calculatorToLatex};
 export const ruleChoices=CHOICES;
 if(typeof window!=='undefined'){
   window.MathDreamweaverSteps=Object.freeze({
-    explainDerivative,checkNextRule,checkStudentStep,ruleChoices
+    explainDerivative,checkNextRule,assessNextRule,checkStudentStep,calculatorToLatex,ruleChoices
   });
 }

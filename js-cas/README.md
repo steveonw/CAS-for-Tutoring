@@ -1,8 +1,11 @@
-# JavaScript CAS and Tutor Mode — v0.4.0
+# JavaScript CAS and Tutor Mode — v0.5.1
 
 A **fully offline JavaScript CAS and guided Calculus I derivative tutor**. Nerdamer 2.0.0 computes the symbolic result, CortexJS Compute Engine 0.159.0 records the *actual derivative transformations* and rule IDs, and locally bundled MathJax 3.2.2 displays mathematical steps as LaTeX. It follows the offline packaging pattern of [EquationWright](https://github.com/steveonw/equationwright).
 
 ## Features
+
+**New in v0.5.1:** Correct student answers earn credit even if they bypass engine-created intermediate `d/dx` expressions. The app advances to the matched later step or final result; students can still review all recorded working. A strict calculator-to-LaTeX converter preserves typed grouping and arithmetic before comparison. **Chain rule** is accepted as an alternative initial rule for appropriate composite expressions. The diagnostic library recognizes additional known wrong forms: multiplying product derivatives, reversed quotient-rule subtraction, leaving a power unchanged, and forgetting the inner derivative of `e^(3*x)`. Mathematical caveats are collapsed; domain notes appear only when relevant. See [Tutor Mode guide](../docs/TUTOR_MODE.md).
+
 
 **New in v0.5.0:** The student next-line checker now preserves original calculator input before simplification, reviews recognized denominator/logarithm/radical restrictions, and warns when a proposed line introduces a new undefined point such as `2*x^2/x` at `x=0` for the derivative of `x^2`. It gives **evidence-backed** feedback for common chain-rule (missing inner derivative), product-rule (missing term), quotient-rule (plus instead of minus), and constant-rule errors. Each diagnosis requires a matched wrong mathematical expression and a counterexample against the real-domain-allowed correct derivative. These checks remain partial, not a universal domain solver. See [Tutor Mode guide](../docs/TUTOR_MODE.md).
 

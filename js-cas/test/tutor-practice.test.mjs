@@ -25,11 +25,13 @@ test('the exact recorded expression is recognized at Step 0 and later',()=>{
   assert.equal(checkStudentStep(trace,trace.steps.length-2,trace.steps.at(-1).latex).status,'matched');
   assert.equal(checkStudentStep(trace,trace.steps.length-1,'x').status,'complete');
 });
-test('a correct final derivative is not passed off as the next rule',()=>{
+test('a correct final derivative earns credit instead of an incorrect skipped label',()=>{
   const trace=explainDerivative('(x^2+3)^4');
   const result=checkStudentStep(trace,-1,trace.resultLatex);
-  assert.equal(result.status,'skipped');
-  assert.match(result.message,/final derivative/i);
+  assert.equal(result.status,'advanced');
+  assert.equal(result.advanceTo,trace.steps.length-1);
+  assert.equal(result.final,true);
+  assert.match(result.message,/correct derivative/i);
 });
 test('unsafe, unsupported or empty student math cannot be accepted',()=>{
   const trace=explainDerivative('sin(x^2)');

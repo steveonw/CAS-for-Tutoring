@@ -35,27 +35,35 @@ async function main(){
     await page.getByRole('button',{name:'Check my choice'}).click();
     assert.match(await page.locator('.rule-feedback').innerText(),/Correct/i);
 
-    // A raw final result skips the first intermediate rule.
+    // A correct final result at Step 0 earns credit and advances to the
+    // final state rather than being criticized for skipping engine syntax.
     const trace=await page.evaluate(()=>{
       const calculated=window.MathDreamweaverCAS.calculate('differentiate','(x^2+3)^4');
       return window.MathDreamweaverSteps.explainDerivative(calculated.latexExpression,{
         checkLatex:calculated.latexAnswer
       });
     });
-    await page.locator('#student-step-format').selectOption('latex');
-    await page.locator('#student-next-step').fill(trace.resultLatex);
+    await page.locator('#next-rule').selectOption('chain');
+    await page.getByRole('button',{name:'Check my choice'}).click();
+    assert.equal(await page.locator('.rule-feedback').getAttribute('data-status'),'correct');
+    await page.locator('#student-step-format').selectOption('cas');
+    await page.locator('#student-next-step').fill('4*(x^2+3)^3*2*x');
     await page.getByRole('button',{name:'Check my step'}).click();
-    assert.equal(await page.locator('#student-feedback').getAttribute('data-status'),'skipped');
-    assert.equal(await page.locator('.answer-area').isVisible(),false);
+    assert.match(await page.locator('.student-progress').innerText(),/Correct derivative/);
+    assert.match(await page.locator('.step-card h3').innerText(),/Step 3 of 3/);
+    assert.equal(await page.locator('.answer-area').isVisible(),true);
 
-    // The exact next transformation earns a match without revealing the answer.
+    // A fresh practice attempt can still follow one recorded rule at a time.
+    await page.getByRole('button',{name:'Start guided practice'}).click();
+    await page.locator('#student-step-format').selectOption('latex');
     await page.locator('#student-next-step').fill(trace.steps[0].latex);
     await page.getByRole('button',{name:'Check my step'}).click();
-    assert.equal(await page.locator('#student-feedback').getAttribute('data-status'),'matched');
+    assert.match(await page.locator('.step-card h3').innerText(),/Step 1 of 3/);
     await page.locator('#student-next-step').fill('\\href{https://bad.example}{x}');
     await page.getByRole('button',{name:'Check my step'}).click();
     assert.equal(await page.locator('#student-feedback').getAttribute('data-status'),'invalid');
 
+    await page.getByRole('button',{name:'Previous step'}).click();
     await page.getByRole('button',{name:'Reveal step 1'}).click();
     assert.match(await page.locator('.step-card h3').innerText(),/Step 1 of 3/);
     assert.equal(await page.locator('.step-card .math').nth(1).isVisible(),true);
@@ -73,8 +81,10 @@ async function main(){
     await page.locator('.step-card .math mjx-container').first().waitFor({timeout:30000});
     await page.screenshot({path:path.join(reports,'tutor-step-zero.png'),fullPage:true});
 
-    // Domain conditions appear with the recorded lesson and are partial.
-    assert.match(await page.locator('.domain-notes').innerText(),/domain|restriction/i);
+    // Hide domain noise when no restriction was actually identified.
+    assert.equal(await page.locator('.domain-notes').count(),0);
+    assert.equal(await page.locator('.about-checks').count(),1);
+    assert.equal(await page.locator('.about-checks').evaluate(node=>node.open),false);
 
     // Actual student-generated calculator notation must be checked BEFORE
     // the CAS simplifier removes x/x and its undefined point at x=0.
