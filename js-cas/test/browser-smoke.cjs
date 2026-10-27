@@ -119,7 +119,7 @@ async function main(){
     // A mathematically valid partial derivative with an unevaluated d/dx is
     // a correct intermediate line, not a wrong final result.
     await page.locator('#student-step-format').selectOption('latex');
-    await page.locator('#student-next-step').fill('5(3x^2+1)^4\\\\frac{d}{dx}(3x^2+1)');
+    await page.locator('#student-next-step').fill('5(3x^2+1)^4\\frac{d}{dx}(3x^2+1)');
     await page.getByRole('button',{name:'Check my step'}).click();
     assert.match(await page.locator('.step-card h3').innerText(),/Step 1 of/);
     assert.equal(await page.locator('.answer-area').isVisible(),false);
