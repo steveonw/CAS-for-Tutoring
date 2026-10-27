@@ -37,6 +37,7 @@ Copy the complete `js-cas/offline/` folder to your offline computer and open its
 - `docs/SPEC.md` — product architecture and roadmap
 - `docs/LATEX_INTEGRATION.md` — MathJax/EquationWright design notes and accepted LaTeX commands
 - `docs/TUTOR_MODE.md` — Step 0, next-step entry, grader boundaries and usage
+- `docs/V0_6_TUTOR_DESIGN.md` — proposed v0.6 part-aware feedback, tiered hints, offline visual editor and acceptance tests
 - `developer/` — earlier experimental test scripts (not automatically wired into current app)
 - `.github/workflows/javascript-cas.yml` — tests and downloadable offline package
 - `LICENSE` — original MIT license, untouched
