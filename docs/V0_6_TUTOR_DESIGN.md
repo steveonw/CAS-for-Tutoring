@@ -1,6 +1,6 @@
 # v0.6 Design — Part-Aware Calculus Tutoring and Offline Math Input
 
-**Status: PARTIALLY IMPLEMENTED (v0.6.0-alpha.1).** Source-AST-based chain-rule part feedback, three progressive hint levels, and strict mathematical/browser tests are implemented. **MathLive visual input, arbitrary multi-step proof grading, and full product/quotient part decomposition are not implemented.** Tracking issue: [#11](https://github.com/steveonw/CAS-for-Tutoring/issues/11). This design integrates the external AI's review with stricter mathematical acceptance criteria. Do not advertise the remaining goals as shipped until their implementation PRs and offline tests pass.
+**Status: PARTIALLY IMPLEMENTED (v0.6.0-alpha.2).** Source-AST-based chain-rule feedback, three progressive hint levels, and fully offline **MathLive visual student-step entry** are implemented with browser/math tests. **Unrestricted multi-step proof grading and full product/quotient part decomposition are not implemented.** Tracking issue: [#11](https://github.com/steveonw/CAS-for-Tutoring/issues/11). This design integrates the external AI's review with stricter mathematical acceptance criteria. Do not advertise the remaining goals as shipped until their implementation PRs and offline tests pass.
 
 ## What actually shipped in phase 1
 
@@ -8,7 +8,15 @@
 - It labels an outside derivative as correct **only when** the student's unsimplified factors match and a different final derivative can be demonstrated at a sample point allowed by the recognized original real domain. It distinguishes an absent factor from a present but incorrect inside factor.
 - It returns structured `recognized`, `problemPart`, `hints`, and `evidence` fields; the UI typesets the outside/inside parts and reveals the full expression only with the third hint.
 - The pinned CortexJS parser recognizes legitimate `\frac{d}{dx}` partial derivative lines. The strict regression suite and Chrome browser exercise this actual workflow, along with safe LaTeX input and the existing cross-engine disagreement guard.
-- **Still pending in issue #11:** MathLive offline visual editor, full product/quotient component decomposition and more general proof-like intermediate evaluation. The v0.6.0-alpha.1 release is **not the completed v0.6 milestone**.
+- **Completed in alpha.2:** offline MathLive visual student-step editor with pinned script, local font styles and licenses, single-file embedded font data, keyboard/visual browser tests and text fallback. **Still pending in issue #11:** full product/quotient component decomposition and more general proof-like intermediate evaluation. The alpha release is **not the completed v0.6 milestone**.
+
+## What shipped in phase 2 — MathLive visual student input
+
+- `js-cas/package.json` pins MathLive **0.111.1**. `scripts/build-offline.cjs` bundles the library, its font CSS, 20 local font assets and license; `scripts/build-single-file.cjs` inlines that CSS as real font data URLs, embeds the trusted library source and preserves its license.
+- The student-next-step editor defaults to the **MathLive web component** and includes a physical-keyboard path, on-screen math keyboard, and buttons for common fraction/root/power/trig/differential structures.
+- Students can still select the original calculator syntax or LaTeX textarea. The MathLive output goes through **the same allowlisted LaTeX step checker**; no alternative equivalence or security rules were introduced. Correct partial `d/dx` and completed derivatives earn the appropriate credit.
+- `js-cas/test/browser-smoke.cjs` verifies the actual mathfield, keyboard events, partial and completed derivatives, local font registration, source-domain regression and both `file://` distributions. The existing mathematical tests and MathJax render audit remain blocking.
+- Bundle trade-off: single-file HTML grew **8,953,423 → 10,433,139 bytes** (+1,479,716 bytes). It still runs with **zero HTTP requests**.
 
 ## Why this milestone
 
@@ -106,7 +114,7 @@ Why not mark every sampled match unconditionally correct? **WeBWorK does use dom
 
 ## Out of scope and follow-on work
 
-**Not in v0.6:** unrestricted formal proof grading; a complete domain/inequality solver; integration and limit step traces; or automatic storage of student history.
+**Still not in this alpha:** unrestricted formal proof grading; a complete domain/inequality solver; integration and limit step traces; or automatic storage of student history.
 
 After v0.6, prioritize **integration before limits** because antiderivatives can be checked by differentiating (subject to domains and additive constants). For future adaptive practice, collect mistake *counts* only with **opt-in, on-device storage**, clear/export/delete controls, and no network; do not quietly begin logging students' work.
 
