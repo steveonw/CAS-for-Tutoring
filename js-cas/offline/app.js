@@ -259,6 +259,17 @@
       }
     });
     var hintButton = appendButton(entry, 'Show next hint', showNextHint, 'secondary');
+    attempt.addEventListener('input', function () {
+      // A changed answer must not inherit a diagnosis from an older attempt.
+      graded.textContent=''; graded.dataset.status=''; graded.dataset.mistake='';
+      graded.className='note';
+      resetHints(window.MathDreamweaverSteps.getProgressiveHints(trace,index));
+    });
+    attemptFormat.addEventListener('change', function () {
+      graded.textContent=''; graded.dataset.status=''; graded.dataset.mistake='';
+      graded.className='note';
+      resetHints(window.MathDreamweaverSteps.getProgressiveHints(trace,index));
+    });
 
     var allBox = document.createElement('div'); allBox.className = 'all-steps'; allBox.hidden = true;
     lesson.appendChild(allBox);
