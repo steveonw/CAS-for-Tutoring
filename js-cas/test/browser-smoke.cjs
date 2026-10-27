@@ -247,7 +247,7 @@ async function main(){
     assert.equal(await single.evaluate(()=>document.querySelector('#embedded-mathlive-fonts')!==null),true);
     assert.ok((await single.evaluate(()=>[...document.styleSheets].some(s=>s.ownerNode?.id==='embedded-mathlive-fonts'))));
     await single.locator('#student-mathfield').evaluate(el=>{
-      el.value='4(x^2+3)^3\cdot 2x';
+      el.value='4(x^2+3)^3\\cdot 2x';
       el.dispatchEvent(new Event('input',{bubbles:true}));
     });
     await single.getByRole('button',{name:'Check my step'}).click();
