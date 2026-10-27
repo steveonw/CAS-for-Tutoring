@@ -5,6 +5,7 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import {describeDerivativeDomain,describeCalculatorDomain,extraStudentDomainHole,originalDomainNotes,parseCalculatorRaw,calculatorToLatex} from './domain-guard.mjs';
 import {diagnoseCommonMistake} from './practice-diagnostics.mjs';
+import {diagnoseDerivativeParts,getProgressiveHints,getChainPlan} from './derivative-parts.mjs';
 const engine = new ComputeEngine();
 const RULES = Object.freeze({
   'derivative.power-rule': {
@@ -244,7 +245,7 @@ export function checkNextRule(trace,viewedIndex,selectedFamily){
 const STUDENT_TEX_COMMANDS=new Set([
   'frac','dfrac','tfrac','sqrt','sin','cos','tan','sec','csc','cot',
   'arcsin','arccos','arctan','sinh','cosh','tanh','ln','exp',
-  'pi','cdot','times','left','right','exponentialE'
+  'pi','cdot','times','left','right','exponentialE','mathrm'
 ]);
 function validateStudentLatex(input) {
   const source=normalizeText(input,360);
@@ -370,6 +371,15 @@ export function checkStudentStep(trace, viewedIndex, latex, options={}) {
 
   // If no correct later state matched, check known mistake patterns with
   // an actual counterexample, then the immediate expected step.
+  const studentDomainHole=extraStudentDomainHole(trace.originalLatex,trace.resultLatex,latex,{
+    originalSource:trace.sourceExpression,studentSource:options.calculatorSource
+  });
+  if(studentDomainHole)return {status:'domain-mismatch',x:studentDomainHole.x,
+    message:studentDomainHole.message};
+  // First try evidence-backed decomposition of the actual outer and inner
+  // functions. Hard-coded classic mistakes remain a fallback.
+  const partDiagnosis=diagnoseDerivativeParts(trace,latex,options);
+  if(partDiagnosis)return partDiagnosis;
   const mistake=diagnoseCommonMistake(trace,latex);
   if(mistake)return mistake;
   let required;
@@ -384,10 +394,11 @@ export function checkStudentStep(trace, viewedIndex, latex, options={}) {
     message:'The expressions differ at x = '+example.x+'. Review the '+next.rule+' and check each term.'};
   return {status:'unverified',message:'I could not verify this line against the recorded rule or the final derivative. That does not mean your reasoning is necessarily wrong; try a hint or reveal the step.'};
 }
-export {calculatorToLatex};
+export {calculatorToLatex,getChainPlan,getProgressiveHints,diagnoseDerivativeParts};
 export const ruleChoices=CHOICES;
 if(typeof window!=='undefined'){
   window.MathDreamweaverSteps=Object.freeze({
-    explainDerivative,checkNextRule,assessNextRule,checkStudentStep,calculatorToLatex,ruleChoices
+    explainDerivative,checkNextRule,assessNextRule,checkStudentStep,
+    calculatorToLatex,getProgressiveHints,ruleChoices
   });
 }

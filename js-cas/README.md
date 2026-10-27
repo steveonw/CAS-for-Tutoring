@@ -1,8 +1,11 @@
-# JavaScript CAS and Tutor Mode — v0.5.1
+# JavaScript CAS and Tutor Mode — v0.6.0-alpha.1
 
 A **fully offline JavaScript CAS and guided Calculus I derivative tutor**. Nerdamer 2.0.0 computes the symbolic result, CortexJS Compute Engine 0.159.0 records the *actual derivative transformations* and rule IDs, and locally bundled MathJax 3.2.2 displays mathematical steps as LaTeX. It follows the offline packaging pattern of [EquationWright](https://github.com/steveonw/equationwright).
 
 ## Features
+
+**New in v0.6.0-alpha.1 — first teaching milestone:** Tutor Mode can identify a mathematically confirmed **correct outside derivative** and distinguish a **missing inside derivative** from an **incorrect inside factor** for supported composite powers, trig, exponential, logarithm and square-root problems. It uses the original expression AST, matched factors and an original-domain-valid counterexample; it does not divide by potentially zero factors or guess that every error is a chain-rule error. Feedback separately typesets the known-correct outside part and the inside function. **Three progressive hints** reveal a small clue, then the inside function, then a full worked chain-rule line. The last line stays hidden until hint 3. Student-written partial derivatives using `\frac{d}{dx}` remain valid intermediate expressions. **MathLive visual input is still pending**; the current release retains calculator and LaTeX text entry.
+
 
 **New in v0.5.1:** Correct student answers earn credit even if they bypass engine-created intermediate `d/dx` expressions. The app advances to the matched later step or final result; students can still review all recorded working. A strict calculator-to-LaTeX converter preserves typed grouping and arithmetic before comparison. **Chain rule** is accepted as an alternative initial rule for appropriate composite expressions. The diagnostic library recognizes additional known wrong forms: multiplying product derivatives, reversed quotient-rule subtraction, leaving a power unchanged, and forgetting the inner derivative of `e^(3*x)`. Mathematical caveats are collapsed; domain notes appear only when relevant. See [Tutor Mode guide](../docs/TUTOR_MODE.md).
 
@@ -16,7 +19,7 @@ A **fully offline JavaScript CAS and guided Calculus I derivative tutor**. Nerda
 **v0.3.1 correctness fixes:** `log(x)` has the same natural-logarithm meaning in both engines (displayed as `\ln`), `\exponentialE` renders in offline MathJax, all emitted differentiation rule IDs have student-readable names, and true numerical coefficients are taught as the constant-multiple rule. Each step shows the before and after expressions. Exact repeated steps are omitted.
 
 - **Built-in derivative breakdown**: real CortexJS `explain('D')` transformations, each rendered as a formula with the rule and a textbook reference.
-- **One step at a time**: Step 0 first-rule prediction, typed next line, previous/next, reveal all, hidden final CAS answer, “Why this rule?”, and hints.
+- **One step at a time**: Step 0 first-rule prediction, typed next line, three graded hint levels, previous/next, reveal all, hidden final CAS answer and “Why this rule?”.
 - **Cross-engine check**: CortexJS/Nerdamer symbolic comparisons are supplemented with finite real-domain numeric samples. A counterexample blocks the derivative walkthrough and final answer; matching samples alone are **not** proof of equivalence. Unknown results are marked as unconfirmed.
 
 - Differentiate, integrate, simplify, expand, factor, solve equations for x, and evaluate supported limits.
@@ -63,6 +66,8 @@ The folder-based edition copies:
 - `test/cas.test.cjs` and `test/step-engine.test.mjs` — CAS, LaTeX, derivative steps, rule-check and safety checks.
 - `test/derivative-corpus.test.mjs` — strict 26-problem derivative regression set and log/constant/chain-rule validation.
 - `test/tutor-practice.test.mjs` — Step 0, typed work, skip-ahead and input-safety regression tests.
+- `test/derivative-parts.test.mjs` — strict component-level differentiation, partial-d/dx, hint-stage and false-positive tests.
+- `lib/derivative-parts.mjs` — supported source-AST decomposition with source-domain checks; hints remain subject to the confidence of actual symbolic verification.
 - `test/domain-diagnostics.test.mjs` — domain boundaries, removable singularities, original problem exclusions, and named misconception checks.
 - `lib/domain-guard.mjs`, `lib/practice-diagnostics.mjs` — conservative domain conditions and evidence-backed diagnostic patterns.
 - `test/render-check.browser.cjs` — required MathJax error audit in Chrome, including exponentials.

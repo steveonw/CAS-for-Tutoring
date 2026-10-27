@@ -196,6 +196,56 @@
     entry.appendChild(attemptFormat);
     var graded = text(entry,'p','','note'); graded.id = 'student-feedback';
     graded.setAttribute('role','status'); graded.setAttribute('aria-live','polite');
+    var recognizedParts = document.createElement('section'); recognizedParts.className='feedback-parts';
+    recognizedParts.hidden=true; entry.appendChild(recognizedParts);
+    text(recognizedParts,'p','What you did correctly: outside derivative','note');
+    var correctOuter = formula(recognizedParts,'','');
+    text(recognizedParts,'p','Inside function to differentiate','note');
+    var insideFunction = formula(recognizedParts,'','');
+    var submittedPartLabel = text(recognizedParts,'p','Your inside factor needs correction','note');
+    var submittedPart = formula(recognizedParts,'','');
+    function showRecognizedParts(checked) {
+      var outer=checked && checked.recognized && checked.recognized[0];
+      var inner=checked && checked.problemPart;
+      recognizedParts.hidden=!(outer&&inner);
+      if (recognizedParts.hidden)return;
+      updateFormula(correctOuter,outer.latex);
+      updateFormula(insideFunction,'u='+inner.latex);
+      var entered=inner.kind==='incorrect' && inner.submittedFactorLatex;
+      submittedPartLabel.hidden=!entered;submittedPart.hidden=!entered;
+      if(entered)updateFormula(submittedPart,inner.submittedFactorLatex);
+    }
+    // The same mathematical diagnosis powers all three hint levels. Only
+    // level 3 contains the worked expression; no early solution leaks.
+    var currentHints = [], hintPosition = 0;
+    var hintPane = document.createElement('div'); hintPane.className='progressive-hint';
+    hintPane.hidden = true; hintPane.setAttribute('aria-live','polite');
+    entry.appendChild(hintPane);
+    var hintHeading = text(hintPane,'strong','');
+    var hintBody = text(hintPane,'p','');
+    var hintFormula = formula(hintPane,'',''); hintFormula.hidden = true;
+    function resetHints(hints) {
+      currentHints = Array.isArray(hints) ? hints : [];
+      hintPosition = 0;
+      hintPane.hidden = true; hintFormula.hidden = true;
+      hintHeading.textContent=''; hintBody.textContent='';
+      hintButton.disabled = currentHints.length === 0;
+      hintButton.textContent = currentHints.length ? 'Show next hint (1 of '+currentHints.length+')' : 'No hint available';
+    }
+    function showNextHint() {
+      if (requestId !== runId || hintPosition >= currentHints.length) return;
+      var hint = currentHints[hintPosition++];
+      hintPane.hidden = false;
+      hintPane.dataset.level = String(hint.level || hintPosition);
+      hintHeading.textContent = hint.title || 'Hint '+hintPosition;
+      hintBody.textContent = hint.text || '';
+      hintFormula.hidden = !hint.latex;
+      if (hint.latex) updateFormula(hintFormula,hint.latex);
+      hintButton.textContent = hintPosition < currentHints.length
+        ? 'Show next hint ('+(hintPosition+1)+' of '+currentHints.length+')'
+        : 'All hints shown';
+      hintButton.disabled = hintPosition >= currentHints.length;
+    }
     appendButton(entry, 'Check my step', function () {
       if (!attempt.value.trim()) { graded.textContent='Enter an expression to check.';return; }
       if (requestId !== runId) return;
@@ -215,6 +265,8 @@
           studentProgress.dataset.status = checked.status;
           if (checked.final) revealAnswer();
         } else {
+          resetHints(checked.hints || window.MathDreamweaverSteps.getProgressiveHints(trace,index));
+          showRecognizedParts(checked);
           graded.textContent = checked.message + reminder;
           graded.dataset.status = checked.status;
           graded.dataset.mistake = checked.code || '';
@@ -226,10 +278,18 @@
         graded.dataset.status = 'invalid'; graded.className = 'math-error';
       }
     });
-    appendButton(entry, 'Hint for my next line', function () {
-      graded.textContent = steps[index + 1].hint;
-      graded.dataset.status = 'hint'; graded.className = 'note';
-    }, 'secondary');
+    var hintButton = appendButton(entry, 'Show next hint', showNextHint, 'secondary');
+    attempt.addEventListener('input', function () {
+      // A changed answer must not inherit a diagnosis from an older attempt.
+      graded.textContent=''; graded.dataset.status=''; graded.dataset.mistake='';
+      graded.className='note'; recognizedParts.hidden=true;
+      resetHints(window.MathDreamweaverSteps.getProgressiveHints(trace,index));
+    });
+    attemptFormat.addEventListener('change', function () {
+      graded.textContent=''; graded.dataset.status=''; graded.dataset.mistake='';
+      graded.className='note';
+      resetHints(window.MathDreamweaverSteps.getProgressiveHints(trace,index));
+    });
 
     var allBox = document.createElement('div'); allBox.className = 'all-steps'; allBox.hidden = true;
     lesson.appendChild(allBox);
@@ -291,6 +351,8 @@
       choice.value = ''; feedback.textContent = '';
       attempt.value = ''; graded.textContent = ''; graded.dataset.status = '';
       studentProgress.textContent = ''; studentProgress.dataset.status = '';
+      recognizedParts.hidden = true;
+      resetHints(window.MathDreamweaverSteps.getProgressiveHints(trace,index));
     }
     draw();
   }

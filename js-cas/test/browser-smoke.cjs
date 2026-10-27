@@ -112,6 +112,56 @@ async function main(){
     await page.getByRole('button',{name:'Start guided practice'}).click();
     assert.match(await page.locator('.domain-notes').innerText(),/positive/i);
 
+    // The v0.6 part-aware feedback recognizes what is right and uses
+    // THREE progressive levels of help without spoiling the result early.
+    await page.locator('#expression').fill('(3*x^2+1)^5');
+    await page.getByRole('button',{name:'Start guided practice'}).click();
+    // A mathematically valid partial derivative with an unevaluated d/dx is
+    // a correct intermediate line, not a wrong final result.
+    await page.locator('#student-step-format').selectOption('latex');
+    await page.locator('#student-next-step').fill('5(3x^2+1)^4\\frac{d}{dx}(3x^2+1)');
+    await page.getByRole('button',{name:'Check my step'}).click();
+    assert.match(await page.locator('.step-card h3').innerText(),/Step 1 of/);
+    assert.equal(await page.locator('.answer-area').isVisible(),false);
+    await page.getByRole('button',{name:'Start guided practice'}).click();
+    await page.locator('#student-step-format').selectOption('cas');
+    await page.locator('#student-next-step').fill('5*(3*x^2+1)^4');
+    await page.getByRole('button',{name:'Check my step'}).click();
+    assert.equal(await page.locator('#student-feedback').getAttribute('data-mistake'),'chain-inner-derivative');
+    assert.match(await page.locator('#student-feedback').innerText(),/outside derivative is correct/i);
+    assert.equal(await page.locator('.feedback-parts').isVisible(),true);
+    assert.match(await page.locator('.feedback-parts').innerText(),/outside derivative|inside function/i);
+    await page.locator('.feedback-parts .math mjx-container').first().waitFor({timeout:30000});
+    assert.equal(await page.locator('.progressive-hint').isVisible(),false);
+    await page.getByRole('button',{name:/Show next hint/}).click();
+    assert.equal(await page.locator('.progressive-hint').getAttribute('data-level'),'1');
+    assert.equal(await page.locator('.progressive-hint .math').isVisible(),false);
+    assert.doesNotMatch(await page.locator('.progressive-hint').innerText(),/30x/);
+    await page.getByRole('button',{name:/Show next hint/}).click();
+    assert.equal(await page.locator('.progressive-hint').getAttribute('data-level'),'2');
+    assert.match(await page.locator('.progressive-hint').innerText(),/du\/dx/);
+    assert.doesNotMatch(await page.locator('.progressive-hint').innerText(),/30x/);
+    await page.getByRole('button',{name:/Show next hint/}).click();
+    assert.equal(await page.locator('.progressive-hint').getAttribute('data-level'),'3');
+    assert.equal(await page.locator('.progressive-hint .math').isVisible(),true);
+    await page.locator('.progressive-hint .math mjx-container').waitFor({timeout:30000});
+    assert.equal(await page.getByRole('button',{name:'All hints shown'}).isDisabled(),true);
+
+    await page.locator('#student-next-step').fill('5*(3*x^2+1)^4*3*x');
+    assert.equal(await page.locator('.progressive-hint').isVisible(),false);
+    assert.equal(await page.locator('.feedback-parts').isVisible(),false);
+    await page.getByRole('button',{name:'Check my step'}).click();
+    assert.equal(await page.locator('#student-feedback').getAttribute('data-mistake'),'chain-inner-incorrect');
+    assert.equal(await page.locator('.feedback-parts .math').count(),3);
+    assert.equal(await page.locator('.feedback-parts').isVisible(),true);
+    assert.match(await page.locator('#student-feedback').innerText(),/inside/i);
+    assert.doesNotMatch(await page.locator('#student-feedback').innerText(),/missing/i);
+    await page.screenshot({path:path.join(reports,'part-aware-three-hints.png'),fullPage:true});
+    await page.locator('#student-next-step').fill('5*(3*x^2+1)^4*6*x');
+    await page.getByRole('button',{name:'Check my step'}).click();
+    assert.match(await page.locator('.student-progress').innerText(),/Correct derivative/);
+    assert.equal(await page.locator('.answer-area').isVisible(),true);
+
     // Calculator Mode shows the answer immediately, without tutor questions.
     await page.locator('#study-mode').selectOption('calculator');
     assert.equal(await page.locator('.walkthrough').count(),0);
@@ -143,6 +193,9 @@ async function main(){
     await single.locator('.step-card h3').waitFor({timeout:30000});
     assert.match(await single.locator('.step-card h3').innerText(),/Step 0/);
     await single.locator('.step-card .math mjx-container').first().waitFor({timeout:30000});
+    assert.equal(await single.getByRole('button',{name:/Show next hint/}).count(),1);
+    await single.getByRole('button',{name:/Show next hint/}).click();
+    assert.equal(await single.locator('.progressive-hint').getAttribute('data-level'),'1');
     await single.locator('#next-rule').selectOption('power');
     await single.getByRole('button',{name:'Check my choice'}).click();
     assert.match(await single.locator('.rule-feedback').innerText(),/Correct/);

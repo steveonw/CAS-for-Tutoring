@@ -68,3 +68,11 @@ For composite expressions including `(x^2+3)^4`, `cos(x)^2`, and `e^(3*x)`, the 
 Expanded mistake patterns cover multiplying f′g′ in place of the product rule, reversing a quotient-rule numerator's subtraction order, failing to lower a power's exponent, and missing the inner derivative for `e^(3*x)`. These patterns still need both a matching symbolic wrong expression and a counterexample within a recognized valid original domain.
 
 Technical caveats are now under **About these checks and their limitations**. The domain-notes box appears only when a recognizable restriction exists. This is a human-centered Calculus I aid, not a general proof checker.
+
+## v0.6.0-alpha.1 — Recognize correct parts and reveal hints gradually
+
+For supported chain-rule problems such as `(3*x^2+1)^5`, the tutor compares a student's **unsimplified outside factors** to the verified derivative decomposition. Enter `5*(3*x^2+1)^4`: it identifies the *outside derivative* as correct, shows the actual inside function, and explains that its derivative is missing. Enter `5*(3*x^2+1)^4*3*x`: it reports that the **inside factor is incorrect**, not missing. Enter `5*(3*x^2+1)^4*6*x` or `30*x*(3*x^2+1)^4`: the calculator credits the correct complete derivative as before.
+
+**Show next hint** progresses through three levels: (1) short clue, (2) focused question about the typeset inner function, and (3) full worked line. Levels 1 and 2 do not display the worked answer; the third does. A new input attempt or problem resets the hints. Supported LaTeX `\frac{d}{dx}` expressions can still be accepted as *partially evaluated* correct steps.
+
+This implementation does **not** infer what is correct merely by dividing two formulas. It requires a verified source-derived chain decomposition, structural factor evidence and a counterexample where the original recognized real domain permits the input. Unsupported structures fall back to earlier pattern checks and honest noncommittal feedback. The domain inspector remains partial, not a general theorem prover. In this **alpha** release, student input is still a text field. The offline visual MathLive editor from [issue #11](https://github.com/steveonw/CAS-for-Tutoring/issues/11) remains to be built.
