@@ -26,6 +26,8 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Test symbolic math and TeX conversions
         run: npm test
+      - name: Inspect domain AST shapes (development diagnostics)
+        run: node scripts/audit-practice-domains.mjs
       - name: Build offline distribution
         run: npm run build:offline
       - name: Verify offline math renderer and licenses
