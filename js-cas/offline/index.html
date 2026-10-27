@@ -44,6 +44,14 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .step-entry textarea{font-family:ui-monospace,SFMono-Regular,monospace;min-height:66px}
 .step-entry select{width:100%;max-width:360px}
 #student-feedback{min-height:1.5em}
+.math-entry{margin-top:8px}
+.math-entry math-field{display:block;width:100%;min-height:64px;background:#f8fbff;color:#101a2a;
+ padding:10px;border:2px solid #61728e;border-radius:9px;font-size:1.22rem;--caret-color:#101a2a}
+.math-entry math-field:focus-within{outline:3px solid #67e8f9;outline-offset:2px}
+.math-entry[hidden],.text-entry[hidden]{display:none}
+.math-entry .note{margin:7px 0}
+.math-keys{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.math-keys button{margin:0;font-size:.9rem;padding:6px 10px}
 .feedback-parts{margin:12px 0;padding:12px;border:1px solid #405c7c;border-radius:10px;background:#172b40}
 .feedback-parts .note{margin:6px 0}
 .feedback-parts .math{padding:9px 4px;margin:7px 0}
@@ -51,11 +59,13 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .progressive-hint strong{color:#adf1fd}
 .progressive-hint .math{background:#101f30}
 </style>
+<link rel="stylesheet" href="./vendor/mathlive-fonts.css">
 <script src="./mathjax-config.js"></script>
 <script defer src="./vendor/mathjax-tex-svg.js"></script>
 <script defer src="./vendor/nerdamer.bundle.js"></script>
 <script defer src="./cas-adapter.js"></script>
 <script defer src="./vendor/step-engine.bundle.js"></script>
+<script defer src="./vendor/mathlive.min.js"></script>
 <script defer src="./app.js"></script>
 </head>
 <body>
