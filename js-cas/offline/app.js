@@ -196,6 +196,25 @@
     entry.appendChild(attemptFormat);
     var graded = text(entry,'p','','note'); graded.id = 'student-feedback';
     graded.setAttribute('role','status'); graded.setAttribute('aria-live','polite');
+    var recognizedParts = document.createElement('section'); recognizedParts.className='feedback-parts';
+    recognizedParts.hidden=true; entry.appendChild(recognizedParts);
+    text(recognizedParts,'p','What you did correctly: outside derivative','note');
+    var correctOuter = formula(recognizedParts,'','');
+    text(recognizedParts,'p','Inside function to differentiate','note');
+    var insideFunction = formula(recognizedParts,'','');
+    var submittedPartLabel = text(recognizedParts,'p','Your inside factor needs correction','note');
+    var submittedPart = formula(recognizedParts,'','');
+    function showRecognizedParts(checked) {
+      var outer=checked && checked.recognized && checked.recognized[0];
+      var inner=checked && checked.problemPart;
+      recognizedParts.hidden=!(outer&&inner);
+      if (recognizedParts.hidden)return;
+      updateFormula(correctOuter,outer.latex);
+      updateFormula(insideFunction,'u='+inner.latex);
+      var entered=inner.kind==='incorrect' && inner.submittedFactorLatex;
+      submittedPartLabel.hidden=!entered;submittedPart.hidden=!entered;
+      if(entered)updateFormula(submittedPart,inner.submittedFactorLatex);
+    }
     // The same mathematical diagnosis powers all three hint levels. Only
     // level 3 contains the worked expression; no early solution leaks.
     var currentHints = [], hintPosition = 0;
@@ -247,6 +266,7 @@
           if (checked.final) revealAnswer();
         } else {
           resetHints(checked.hints || window.MathDreamweaverSteps.getProgressiveHints(trace,index));
+          showRecognizedParts(checked);
           graded.textContent = checked.message + reminder;
           graded.dataset.status = checked.status;
           graded.dataset.mistake = checked.code || '';
@@ -262,7 +282,7 @@
     attempt.addEventListener('input', function () {
       // A changed answer must not inherit a diagnosis from an older attempt.
       graded.textContent=''; graded.dataset.status=''; graded.dataset.mistake='';
-      graded.className='note';
+      graded.className='note'; recognizedParts.hidden=true;
       resetHints(window.MathDreamweaverSteps.getProgressiveHints(trace,index));
     });
     attemptFormat.addEventListener('change', function () {
@@ -331,6 +351,7 @@
       choice.value = ''; feedback.textContent = '';
       attempt.value = ''; graded.textContent = ''; graded.dataset.status = '';
       studentProgress.textContent = ''; studentProgress.dataset.status = '';
+      recognizedParts.hidden = true;
       resetHints(window.MathDreamweaverSteps.getProgressiveHints(trace,index));
     }
     draw();
