@@ -88,7 +88,7 @@ test('quotient rule identifies adding instead of subtracting',()=>{
   const f=ce.box(raw[1],{canonical:false}).latex,g=ce.box(raw[2],{canonical:false}).latex;
   const fp=ce.parse(f).explain('D',{variable:'x'})?.result?.latex,
     gp=ce.parse(g).explain('D',{variable:'x'})?.result?.latex;
-  const guessed='\\\\frac{\\\\left('+g+'\\\\right)\\\\left('+fp+'\\\\right)+\\\\left('+f+'\\\\right)\\\\left('+gp+'\\\\right)}{\\\\left('+g+'\\\\right)^2}';
+  const guessed='\\frac{\\left('+g+'\\right)\\left('+fp+'\\right)+\\left('+f+'\\right)\\left('+gp+'\\right)}{\\left('+g+'\\right)^2}';
   const student=cas.inputToLatex('(2*x*x+(x^2+1))/x^2','cas');
   const a=ce.parse(guessed),b=ce.parse(student);
   console.log('QUOTIENT_DEBUG',JSON.stringify({raw,f,g,fp,gp,guessed,student,ga:a.json,sa:b.json,isEqual:a.isEqual(b),simpA:a.simplify().json,simpB:b.simplify().json}));
