@@ -91,6 +91,64 @@ function parseRaw(latex) {
   if(!result || result.isValid===false)throw new Error('Unable to inspect expression domain.');
   return result.json;
 }
+// A small, non-evaluating parser for validated calculator syntax. It keeps
+// divisions and powers intact BEFORE Nerdamer's conversion/simplification.
+// This catches the new hole in 2*x^2/x, even if its TeX simplifies to 2*x.
+export function parseCalculatorRaw(source) {
+  if(typeof source!=='string'||!source.trim()||source.length>180||
+    !/^[A-Za-z0-9+\-*/^().,\s]+$/.test(source))
+    throw new Error('Calculator notation cannot be inspected safely.');
+  const tokens=source.match(/(?:[A-Za-z]+|\d+(?:\.\d+)?|\.\d+|[+\-*/^(),])/g)||[];
+  if(tokens.join('')!==source.replace(/\s/g,''))throw new Error('Unsupported calculator token.');
+  let index=0;
+  const peek=()=>tokens[index];
+  const take=()=>tokens[index++];
+  function eat(t){if(peek()===t){index++;return true;}return false;}
+  function expect(t){if(!eat(t))throw new Error('Expected '+t+' in calculator expression.');}
+  function primary(){
+    if(eat('(')){const value=add();expect(')');return value;}
+    const token=take();
+    if(token===undefined)throw new Error('Incomplete calculator expression.');
+    if(/^(?:\d+(?:\.\d+)?|\.\d+)$/.test(token))return Number(token);
+    if(token==='x')return 'x';
+    if(token==='pi')return 'Pi';
+    if(token==='e'||token==='E')return 'ExponentialE';
+    const names={sin:'Sin',cos:'Cos',tan:'Tan',sec:'Sec',
+      csc:'Csc',cot:'Cot',asin:'Arcsin',acos:'Arccos',atan:'Arctan',
+      log:'Ln',sqrt:'Sqrt',abs:'Abs',exp:'Exp'};
+    if(!names[token])throw new Error('Unsupported function or name: '+token);
+    expect('(');const argument=add();expect(')');
+    return [names[token],argument];
+  }
+  function power(){
+    const value=primary();
+    return eat('^')?['Power',value,unary()]:value;
+  }
+  function unary(){
+    if(eat('+'))return unary();
+    if(eat('-'))return ['Negate',unary()];
+    return power();
+  }
+  function mul(){
+    let result=unary();
+    while(peek()==='*'||peek()==='/') {
+      const op=take(),rhs=unary();
+      result=op==='*'?['Multiply',result,rhs]:['Divide',result,rhs];
+    }
+    return result;
+  }
+  function add(){
+    let result=mul();
+    while(peek()==='+'||peek()==='-') {
+      const op=take(),rhs=mul();
+      result=op==='+'?['Add',result,rhs]:['Subtract',result,rhs];
+    }
+    return result;
+  }
+  const result=add();
+  if(index!==tokens.length)throw new Error('Unsupported or trailing calculator symbols.');
+  return result;
+}
 function restrictionsFor(ast,{derivative=false}={}) {
   const conditions=[],seen=new Set();
   let complete=true;
@@ -179,8 +237,7 @@ function checkCondition(c,x){
   if(valid)return 'allowed';
   return c.review?'unknown':'excluded';
 }
-export function describeDerivativeDomain(latex,options={}) {
-  const ast=parseRaw(latex);
+function describeAstDomain(ast,options={}) {
   const found=restrictionsFor(ast,options);
   const conditions=found.conditions;
   return {
@@ -211,11 +268,21 @@ export function describeDerivativeDomain(latex,options={}) {
     }
   };
 }
-export function extraStudentDomainHole(originalLatex,expectedLatex,studentLatex) {
+export function describeDerivativeDomain(latex,options={}) {
+  return describeAstDomain(parseRaw(latex),options);
+}
+export function describeCalculatorDomain(source,options={}) {
+  return describeAstDomain(parseCalculatorRaw(source),options);
+}
+export function extraStudentDomainHole(originalLatex,expectedLatex,studentLatex,options={}) {
   try{
-    const original=describeDerivativeDomain(originalLatex,{derivative:true});
+    const original=options.originalSource
+      ? describeCalculatorDomain(options.originalSource,{derivative:true})
+      : describeDerivativeDomain(originalLatex,{derivative:true});
     const expected=describeDerivativeDomain(expectedLatex);
-    const student=describeDerivativeDomain(studentLatex);
+    const student=options.studentSource
+      ? describeCalculatorDomain(options.studentSource)
+      : describeDerivativeDomain(studentLatex);
     const points=[...SAMPLE_POINTS,...student.boundaryCandidates()];
     for(const x of new Set(points)){
       if(original.at(x)==='allowed' && expected.at(x)==='allowed' &&
@@ -227,9 +294,11 @@ export function extraStudentDomainHole(originalLatex,expectedLatex,studentLatex)
   }catch { /* Unsupported structure: never invent a domain claim. */ }
   return null;
 }
-export function originalDomainNotes(latex) {
+export function originalDomainNotes(latex,source) {
   try{
-    const domain=describeDerivativeDomain(latex,{derivative:true});
+    const domain=source
+      ? describeCalculatorDomain(source,{derivative:true})
+      : describeDerivativeDomain(latex,{derivative:true});
     return domain.notes;
   }catch{
     return ['The real domain could not be inspected. Any derivative must still respect the original function domain.'];
