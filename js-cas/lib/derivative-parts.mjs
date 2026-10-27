@@ -205,7 +205,7 @@ export function diagnoseDerivativeParts(trace,studentLatex,options={}) {
   }
   const message=reason==='missing'
     ? 'Your outside derivative is correct. The inside is u = '+plan.innerLatex+
-      '; its derivative must also be multiplied by the outside derivative.'
+      '; the derivative of the inside must also be multiplied by the outside derivative.'
     : 'Your outside derivative is correct, but the factor for the inside u = '+
       plan.innerLatex+' needs correction. Differentiate u before multiplying.';
   const hints=safeHints(plan,reason);
