@@ -14,7 +14,8 @@ function equivalent(candidate,expression){
   try{
     const other=typeof expression==='string'?parsed(expression):expression;
     return JSON.stringify(candidate.json)===JSON.stringify(other.json) ||
-      candidate.isEqual(other)===true;
+      candidate.isEqual(other)===true ||
+      JSON.stringify(candidate.simplify().json)===JSON.stringify(other.simplify().json);
   }catch{return false;}
 }
 function evaluate(expr,x){

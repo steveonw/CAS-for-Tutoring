@@ -5,7 +5,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
-import {ComputeEngine} from '@cortex-js/compute-engine';
 import {explainDerivative,checkStudentStep} from '../lib/step-engine.mjs';
 import {parseCalculatorRaw,describeDerivativeDomain,describeCalculatorDomain,
   extraStudentDomainHole,originalDomainNotes} from '../lib/domain-guard.mjs';
@@ -83,15 +82,6 @@ test('product rule recognizes a single remaining contribution',()=>{
   assert.equal(r.code,'product-missing-term');
 });
 test('quotient rule identifies adding instead of subtracting',()=>{
-  const trace=lesson('(x^2+1)/x');
-  const ce=new ComputeEngine(),raw=ce.parse(trace.originalLatex,{canonical:false}).json;
-  const f=ce.box(raw[1],{canonical:false}).latex,g=ce.box(raw[2],{canonical:false}).latex;
-  const fp=ce.parse(f).explain('D',{variable:'x'})?.result?.latex,
-    gp=ce.parse(g).explain('D',{variable:'x'})?.result?.latex;
-  const guessed='\\frac{\\left('+g+'\\right)\\left('+fp+'\\right)+\\left('+f+'\\right)\\left('+gp+'\\right)}{\\left('+g+'\\right)^2}';
-  const student=cas.inputToLatex('(2*x*x+(x^2+1))/x^2','cas');
-  const a=ce.parse(guessed),b=ce.parse(student);
-  console.log('QUOTIENT_DEBUG',JSON.stringify({raw,f,g,fp,gp,guessed,student,ga:a.json,sa:b.json,isEqual:a.isEqual(b),simpA:a.simplify().json,simpB:b.simplify().json}));
   const r=grade('(x^2+1)/x','(2*x*x+(x^2+1))/x^2');
   assert.equal(r.status,'mistake',r.message);
   assert.equal(r.code,'quotient-sign');
