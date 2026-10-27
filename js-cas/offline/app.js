@@ -114,7 +114,17 @@
         ? 'Values match at ' + verification.samplesChecked + ' sampled points. This is NOT proof of equivalence: domain assumptions still matter.'
         : 'Symbolic agreement has not been established. Check advanced problems independently.';
     text(lesson, 'p', cross, 'note');
-    text(lesson,'p','Practice checking can confirm a recorded form or engine-proven equivalence, or find a numerical counterexample. It cannot establish all domain restrictions.','note');
+    text(lesson,'p','Practice checks may confirm recorded structure or engine equivalence and identify specific mistakes. Known domain conditions are reviewed below, but this is NOT a complete proof of the real domain.','note');
+    var domainBox = document.createElement('section'); domainBox.className = 'domain-notes';
+    lesson.appendChild(domainBox);
+    text(domainBox,'h3','Domain and differentiability checks (partial)');
+    if (trace.domainNotes && trace.domainNotes.length) {
+      var domainList = document.createElement('ul'); domainBox.appendChild(domainList);
+      trace.domainNotes.forEach(function (note) { text(domainList,'li',note); });
+      text(domainBox,'p','Even if a derivative simplifies, exclusions from the original expression still apply. Boundary points may need separate analysis.','note');
+    } else {
+      text(domainBox,'p','No restriction was identified by the limited scanner. This does NOT establish an all-real domain.','note');
+    }
 
     var card = document.createElement('div'); card.className = 'step-card'; lesson.appendChild(card);
     var progress = text(card, 'h3', '');
@@ -191,10 +201,15 @@
         var latex = attemptFormat.value === 'cas'
           ? window.MathDreamweaverCAS.inputToLatex(attempt.value, 'cas')
           : attempt.value;
-        var checked = window.MathDreamweaverSteps.checkStudentStep(trace,index,latex);
-        graded.textContent = checked.message;
+        var checked = window.MathDreamweaverSteps.checkStudentStep(trace,index,latex,
+          attemptFormat.value === 'cas' ? {calculatorSource:attempt.value} : {});
+        var reminder = trace.domainNotes && trace.domainNotes.length &&
+          ['matched','equivalent','skipped'].includes(checked.status)
+          ? ' Keep the original domain restrictions shown above.' : '';
+        graded.textContent = checked.message + reminder;
         graded.dataset.status = checked.status;
-        graded.className = checked.status === 'counterexample' || checked.status === 'invalid'
+        graded.dataset.mistake = checked.code || '';
+        graded.className = ['counterexample','domain-mismatch','mistake','invalid'].includes(checked.status)
           ? 'math-error' : 'note';
       } catch (error) {
         graded.textContent = 'Cannot check this line: ' + (error.message || String(error));
@@ -311,7 +326,8 @@
     if (result.operation === 'differentiate' && result.latexExpression && window.MathDreamweaverSteps) {
       try {
         var trace = window.MathDreamweaverSteps.explainDerivative(result.latexExpression, {
-          checkLatex: result.latexAnswer
+          checkLatex: result.latexAnswer,
+          sourceExpression: result.expression
         });
         if (trace.verification && trace.verification.status === 'conflict') {
           text(output, 'p', 'Mathematical disagreement detected between the two symbolic engines. The walkthrough and final answer are withheld to avoid teaching a potentially incorrect result.', 'math-error');

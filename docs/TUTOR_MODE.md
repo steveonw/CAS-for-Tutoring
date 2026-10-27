@@ -44,3 +44,15 @@ Build using Node.js 22+ from `js-cas/` with `npm install`, `npm test`, `npm run 
 ## Next work
 
 Improve domain tracking, precisely highlight changed terms, diagnose common misconceptions using math-backed rules, grade longer student-written solutions, and provide real rule-based integral and limit walkthroughs. Do not call unsupported solutions verified.
+
+## v0.5.0 — Domain-aware next-step feedback
+
+The checker now inspects a **limited set of real-domain conditions** in both the original problem and a submitted next step. These include nonzero denominators and negative-power bases; positive logarithm arguments; nonnegative square-root arguments; and possible differentiability issues at square-root/absolute-value zeros, inverse-trig boundaries, and trigonometric poles. Some checks are conservative boundary warnings, **not proof that every flagged boundary is a true nondifferentiability point**.
+
+For calculator-notation input, the checker examines the **raw arithmetic before Nerdamer simplification**. This matters: for the derivative of `x^2`, `2*x^2/x` simplifies algebraically to `2*x` but is undefined at `x=0`. Because the original function and expected next step are defined at zero, the tutor reports **domain-mismatch** instead of silently accepting the cancelled expression. By contrast, a problem originally involving `(x^2-1)/(x-1)` retains its original exclusion at `x=1`, even if its derivative expression simplifies.
+
+For certain common Calculus I errors, the engine constructs **specific incorrect patterns** and compares the actual submitted expression against them. A diagnosis also requires a finite real counterexample against the correct final derivative **at a point allowed by the original function's recognized domain**. Supported patterns include omitting the chain rule's inner derivative; retaining only one product-rule contribution; replacing the quotient-rule subtraction with addition; losing a numerical coefficient; and retaining a constant that should differentiate to zero. If the evidence is missing, feedback stays **unverified** or reports a generic counterexample rather than assigning a guessed mistake.
+
+This remains a **partial structural scanner**. It does not solve arbitrary inequalities, detect all removable singularities, prove equality of real domains, or grade an unrestricted handwritten proof. The UI labels detected restrictions and uncertainties rather than claiming complete verification.
+
+Tests: `js-cas/test/domain-diagnostics.test.mjs` covers these recognized cases and negative controls. `js-cas/test/browser-smoke.cjs` checks that the offline interface displays domain notes and specific feedback for real student entries.

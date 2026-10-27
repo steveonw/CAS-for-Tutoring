@@ -3,6 +3,8 @@
  * be justified by the before/after expression AST, never guessed from text.
  */
 import { ComputeEngine } from '@cortex-js/compute-engine';
+import {describeDerivativeDomain,describeCalculatorDomain,extraStudentDomainHole,originalDomainNotes} from './domain-guard.mjs';
+import {diagnoseCommonMistake} from './practice-diagnostics.mjs';
 const engine = new ComputeEngine();
 const RULES = Object.freeze({
   'derivative.power-rule': {
@@ -176,6 +178,9 @@ export function explainDerivative(latex, options={}) {
   const checked=compareResults(trace.result,options.checkLatex);
   return {
     originalLatex:original,
+    sourceExpression:typeof options.sourceExpression==='string' && options.sourceExpression.length<=180 ? options.sourceExpression : null,
+    domainNotes:originalDomainNotes(original,options.sourceExpression),
+    domainScope:'partial — known restrictions only, not a full mathematical domain proof',
     initialLatex:trace.initial.latex,
     resultLatex:trace.result.latex,
     steps, agreement:checked.agreement, verification:checked.verification,
@@ -215,10 +220,16 @@ function parsedOrError(latex) {
 function structuralMatch(a,b) {
   return JSON.stringify(a.json)===JSON.stringify(b.json);
 }
-function sampledCounterexample(a,b) {
-  const checks=[0.2,0.45,0.7,0.85,1.2,1.8,2.5,-0.75,-1.5];
+function sampledCounterexample(a,b,originalLatex,sourceExpression) {
+  const checks=[0.2,0.45,0.7,0.85,1.2,1.8,2.5,-0.75,-1.5,-2,0,1,3];
+  let domain;
+  try{domain=sourceExpression
+    ? describeCalculatorDomain(sourceExpression,{derivative:true})
+    : describeDerivativeDomain(originalLatex,{derivative:true});}
+  catch{return null;}
   let samplesChecked=0;
   for(const x of checks){
+    if(domain.at(x)!=='allowed')continue;
     const aValue=finiteReal(a,x),bValue=finiteReal(b,x);
     if(aValue===null || bValue===null) continue;
     samplesChecked++;
@@ -227,7 +238,7 @@ function sampledCounterexample(a,b) {
   }
   return null;
 }
-export function checkStudentStep(trace, viewedIndex, latex) {
+export function checkStudentStep(trace, viewedIndex, latex, options={}) {
   if(!trace || !Array.isArray(trace.steps) || !Number.isInteger(viewedIndex) ||
     viewedIndex < -1 || viewedIndex>=trace.steps.length)
     return {status:'invalid',message:'No active recorded step to check.'};
@@ -249,6 +260,13 @@ export function checkStudentStep(trace, viewedIndex, latex) {
   }
   // Checking exact next-line structure first means we do not mistake an
   // algebraically equivalent final answer for the requested intermediate rule.
+  // Inspect the source structures before canonical simplification can
+  // erase a hole such as x/x at x=0. An unsupported domain is not "proved".
+  const domainHole=extraStudentDomainHole(trace.originalLatex,next.latex,latex,{
+    originalSource:trace.sourceExpression,
+    studentSource:options.calculatorSource
+  });
+  if(domainHole)return {status:'domain-mismatch',x:domainHole.x,message:domainHole.message};
   if(structuralMatch(proposed,required)) {
     return {status:'matched',message:'Your line matches the next recorded transformation. You can reveal it to check the rule.'};
   }
@@ -256,13 +274,17 @@ export function checkStudentStep(trace, viewedIndex, latex) {
     (structuralMatch(proposed,final) || proposed.isEqual(final)===true)) {
     return {status:'skipped',message:'Your expression reaches the final derivative, but this exercise is asking for the next intermediate step. Try showing the rule you would use first.'};
   }
+  // Misconception feedback requires a concrete match to a known wrong
+  // transformation AND a counterexample against the full correct derivative.
+  const mistake=diagnoseCommonMistake(trace,latex);
+  if(mistake)return mistake;
   const equivalent=proposed.isEqual(required);
   if(equivalent===true){
     return {status:'equivalent',message:'The engine finds your expression symbolically equivalent to the next line. It may use a different order of rules; this does not verify domains or the exact method.'};
   }
-  const example=sampledCounterexample(proposed,required);
+  const example=sampledCounterexample(proposed,required,trace.originalLatex,trace.sourceExpression);
   if(example){
-    return {status:'counterexample',x:example.x,message:'These expressions give different values at x = '+example.x+'. Recheck the rule; for a chain rule, did you differentiate the inside?'};
+    return {status:'counterexample',x:example.x,message:'These expressions give different values at x = '+example.x+'. Review the '+next.rule+' transformation and check each term.'};
   }
   return {status:'unverified',message:'I could not verify this as the next transformation. It may need a different form, or the engine may be unable to prove it. Try a hint or reveal the step.'};
 }

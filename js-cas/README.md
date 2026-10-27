@@ -4,6 +4,9 @@ A **fully offline JavaScript CAS and guided Calculus I derivative tutor**. Nerda
 
 ## Features
 
+**New in v0.5.0:** The student next-line checker now preserves original calculator input before simplification, reviews recognized denominator/logarithm/radical restrictions, and warns when a proposed line introduces a new undefined point such as `2*x^2/x` at `x=0` for the derivative of `x^2`. It gives **evidence-backed** feedback for common chain-rule (missing inner derivative), product-rule (missing term), quotient-rule (plus instead of minus), and constant-rule errors. Each diagnosis requires a matched wrong mathematical expression and a counterexample against the real-domain-allowed correct derivative. These checks remain partial, not a universal domain solver. See [Tutor Mode guide](../docs/TUTOR_MODE.md).
+
+
 **New in v0.4.0:** Tutor Mode (default) starts at Step 0, before any derivative step is revealed. Students identify the *first* rule, can type a proposed next line in calculator or restricted LaTeX syntax, receive cautious math-engine feedback, and then reveal the recorded transformation. Calculator Mode shows the Nerdamer answer immediately. Read [Tutor Mode guide](../docs/TUTOR_MODE.md) for the input and verification limitations.
 
 
@@ -57,6 +60,8 @@ The folder-based edition copies:
 - `test/cas.test.cjs` and `test/step-engine.test.mjs` — CAS, LaTeX, derivative steps, rule-check and safety checks.
 - `test/derivative-corpus.test.mjs` — strict 26-problem derivative regression set and log/constant/chain-rule validation.
 - `test/tutor-practice.test.mjs` — Step 0, typed work, skip-ahead and input-safety regression tests.
+- `test/domain-diagnostics.test.mjs` — domain boundaries, removable singularities, original problem exclusions, and named misconception checks.
+- `lib/domain-guard.mjs`, `lib/practice-diagnostics.mjs` — conservative domain conditions and evidence-backed diagnostic patterns.
 - `test/render-check.browser.cjs` — required MathJax error audit in Chrome, including exponentials.
 - `npm run audit:rules` — inspect engine rule IDs and actual AST transformations when extending calculus coverage.
 
