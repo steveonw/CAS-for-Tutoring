@@ -127,11 +127,10 @@ function safeHints(plan,reason){
   return [
     {level:1,title:'Small clue',text:clue},
     {level:2,title:'Targeted question',
-      text:'Let u = '+inside+'. What is du/dx? Try differentiating the inside before revealing the worked line.',
+      text:'Let u be the expression inside the outer function, shown below. What is du/dx?',
       latex:'u='+inside},
     {level:3,title:'Worked explanation',
-      text:'For u = '+inside+', the inner derivative is u′ = '+plan.innerDerivativeLatex+
-        '. Multiply it by the outside derivative to complete the chain rule.',
+      text:'Differentiate the inside and multiply by the outside derivative. The complete chain-rule line is:',
       latex:'\\frac{d}{dx}f(x)='+plan.expectedLatex}
   ];
 }
@@ -204,10 +203,8 @@ export function diagnoseDerivativeParts(trace,studentLatex,options={}) {
     remainingLatex=reason==='incorrect' ? innerAttempt.latex : null;
   }
   const message=reason==='missing'
-    ? 'Your outside derivative is correct. The inside is u = '+plan.innerLatex+
-      '; the derivative of the inside must also be multiplied by the outside derivative.'
-    : 'Your outside derivative is correct, but the factor for the inside u = '+
-      plan.innerLatex+' needs correction. Differentiate u before multiplying.';
+    ? 'Your outside derivative is correct. The derivative of the inside must also be multiplied by the outside derivative.'
+    : 'Your outside derivative is correct, but the derivative of the inside is incorrect. Differentiate the inside before multiplying.';
   const hints=safeHints(plan,reason);
   return {
     status:'mistake',
