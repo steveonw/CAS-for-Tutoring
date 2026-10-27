@@ -44,6 +44,12 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .step-entry textarea{font-family:ui-monospace,SFMono-Regular,monospace;min-height:66px}
 .step-entry select{width:100%;max-width:360px}
 #student-feedback{min-height:1.5em}
+.feedback-parts{margin:12px 0;padding:12px;border:1px solid #405c7c;border-radius:10px;background:#172b40}
+.feedback-parts .note{margin:6px 0}
+.feedback-parts .math{padding:9px 4px;margin:7px 0}
+.progressive-hint{margin:12px 0;padding:13px;border:1px solid #41687d;background:#152a37;border-radius:10px}
+.progressive-hint strong{color:#adf1fd}
+.progressive-hint .math{background:#101f30}
 </style>
 <script src="./mathjax-config.js"></script>
 <script defer src="./vendor/mathjax-tex-svg.js"></script>
@@ -86,7 +92,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 </main>
 <section class="panel">
 <h2>How this helps you learn</h2>
-<p><strong>Tutor Mode:</strong> begin with Step 0, predict the first rule, type your own next expression, request a hint, then reveal the recorded transformation. <strong>Calculator Mode:</strong> see the symbolic answer immediately. Student-entered lines are checked conservatively: symbolic equality and finite counterexamples are useful, but neither samples nor CAS simplifications establish a complete domain-aware proof. Integration, limits and other operations do not yet have guided traces. The <a href="./learn.html">original derivative tutor</a> remains available.</p>
+<p><strong>Tutor Mode:</strong> begin with Step 0, predict the first rule, type your own next expression, request three progressively stronger hints, then reveal the recorded transformation. <strong>Calculator Mode:</strong> see the symbolic answer immediately. Student-entered lines are checked conservatively: symbolic equality and finite counterexamples are useful, but neither samples nor CAS simplifications establish a complete domain-aware proof. Integration, limits and other operations do not yet have guided traces. The <a href="./learn.html">original derivative tutor</a> remains available.</p>
 <p class="note">Inspired by EquationWright's bundled MathJax 3.2.2 (TeX → SVG) approach. No CDN, analytics, or internet connection is used by this finished offline package. Input supports a deliberately limited LaTeX subset.</p>
 </section>
 </body></html>
