@@ -1,6 +1,6 @@
 # Tutor Mode — Step 0 and student-entered derivative steps
 
-**Status:** Implemented in the offline JavaScript Calculus Lab v0.4.0 for supported derivatives. These checks are not a universal mathematical proof assistant.
+**Status:** Updated through offline JavaScript Calculus Lab v0.5.1 for supported derivatives. These checks are not a universal mathematical proof assistant.
 
 ## Two separate modes
 
@@ -10,13 +10,13 @@
 
 ## Writing a next step
 
-Enter the proposed line in **Calculator syntax** (e.g. `2*x*cos(x^2)`) or select **LaTeX** for a TeX expression (e.g. `2x\cos(x^2)`). Some intermediate recorded steps include unevaluated derivative operators; for those, LaTeX or the Reveal step option is more appropriate.
+Enter the proposed line in **Calculator syntax** (e.g. `2*x*cos(x^2)`) or select **LaTeX** for a TeX expression (e.g. `2x\cos(x^2)`). Some engine-generated intermediate steps include unevaluated derivative operators, but students do **not** have to reproduce them. A correct later state or full derivative earns credit and advances automatically. Calculator input is translated into TeX without Nerdamer first simplifying it, and domain guards inspect the original typed arithmetic.
 
 The checker distinguishes:
 
 - **Matched** — the line is exactly the recorded expression (including its source LaTeX), or parses to the same structured mathematical expression.
 - **Equivalent** — CortexJS confirms symbolic equality to the next line under its assumptions. This is not certification of exactly the same method or all real domains.
-- **Skipped ahead** — your expression is the final derivative but skips the intermediate step currently requested.
+- **Advanced** — your expression matches a later recorded state or final derivative, earns credit and advances. The skipped recorded steps remain available for review.
 - **Counterexample** — the line and the next recorded expression produce different finite real values at a sample input. Such a discrepancy disproves identity at that point.
 - **Unverified** — no established equivalence and no decisive counterexample. The answer is **not automatically marked incorrect**.
 - **Invalid** — the restricted notation is unsupported or cannot be parsed.
@@ -25,7 +25,7 @@ The checker distinguishes:
 
 ## Worked examples
 
-For `(x^2+3)^4`, Step 0 asks which rule to apply first. The first recorded rule is the **power rule** applied to a composite expression. The derivative of the inside, `2x`, appears in later steps. Entering the final result `8*x*(x^2+3)^3` immediately is correctly identified as skipping intermediate work.
+For `(x^2+3)^4`, Step 0 asks which rule to apply first. The first recorded rule is the **power rule** applied to a composite expression. The derivative of the inside, `2x`, appears in later steps. Entering the final result `8*x*(x^2+3)^3` immediately **earns credit** and advances to the last recorded step. Both the **power rule** and **chain rule** are accepted at Step 0 as defensible descriptions of the composite function.
 
 For `sin(x^2)`, the **chain rule** is the first recorded transformation. Start by choosing that rule rather than seeing the answer.
 
@@ -34,9 +34,9 @@ For `log(x)`, this calculator consistently treats `log` as the **natural logarit
 ## Implementation and verification
 
 - `js-cas/lib/step-engine.mjs`: `checkNextRule(trace,-1,...)` and `checkStudentStep(trace,index,latex)`.
-- `js-cas/lib/cas-adapter.js`: validated `inputToLatex()` for student calculator notation.
+- `js-cas/lib/domain-guard.mjs`: `calculatorToLatex()` renders validated calculator notation without asking Nerdamer to simplify it.
 - `js-cas/offline/app.js`: Tutor and Calculator modes, feedback, navigation, rule quiz.
-- `js-cas/test/tutor-practice.test.mjs`: Step 0, typed next line, skip-ahead, adversarial notation and corpus coverage.
+- `js-cas/test/tutor-practice.test.mjs` and `js-cas/test/student-real-world.test.mjs`: Step 0, realistic correct shortcuts, safe input and expanded mistake cases.
 - `js-cas/test/browser-smoke.cjs`: actual offline Chrome checks for both distributions and no network requests.
 
 Build using Node.js 22+ from `js-cas/` with `npm install`, `npm test`, `npm run build:offline`, `npm run test:browser` and `npm run test:render`. The built `offline/calculus-lab-single-file.html` can be opened without internet access.
@@ -56,3 +56,15 @@ For certain common Calculus I errors, the engine constructs **specific incorrect
 This remains a **partial structural scanner**. It does not solve arbitrary inequalities, detect all removable singularities, prove equality of real domains, or grade an unrestricted handwritten proof. The UI labels detected restrictions and uncertainties rather than claiming complete verification.
 
 Tests: `js-cas/test/domain-diagnostics.test.mjs` covers these recognized cases and negative controls. `js-cas/test/browser-smoke.cjs` checks that the offline interface displays domain notes and specific feedback for real student entries.
+
+## v0.5.1 — Real student answers receive credit
+
+The CortexJS steps are **examples**, not mandatory handwriting. If the checker establishes a match to a later recorded expression or final derivative, the answer earns credit and the UI advances to that step. The student can navigate back to review earlier steps. Algebraic equality is still subject to the engine's assumptions and recognized domain restrictions; sample points never prove a complete identity.
+
+The `calculatorToLatex()` formatter in `lib/domain-guard.mjs` turns restricted calculator syntax into TeX without passing the typed expression through Nerdamer's simplifying serializer. The mathematical comparison can subsequently canonicalize expressions while the raw original arithmetic remains available for domain checks. This preserves student entry such as `4*(x^2+3)^3*2*x` and grants credit for the completed chain rule on `(x^2+3)^4`.
+
+For composite expressions including `(x^2+3)^4`, `cos(x)^2`, and `e^(3*x)`, the first-rule quiz also accepts **chain rule** even when CortexJS records the power or exponential rule first. It does not accept chain as a separate initial rule for ordinary `x^5`.
+
+Expanded mistake patterns cover multiplying f′g′ in place of the product rule, reversing a quotient-rule numerator's subtraction order, failing to lower a power's exponent, and missing the inner derivative for `e^(3*x)`. These patterns still need both a matching symbolic wrong expression and a counterexample within a recognized valid original domain.
+
+Technical caveats are now under **About these checks and their limitations**. The domain-notes box appears only when a recognizable restriction exists. This is a human-centered Calculus I aid, not a general proof checker.
